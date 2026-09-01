@@ -39,6 +39,14 @@ a {
   text-decoration: none;
 }
 
+// Временное размещение переключателя темы (до этапов «шапка/футер»)
+.theme-toggle-fixed {
+  position: fixed;
+  top: v.$space-4;
+  right: v.$space-4;
+  z-index: 100;
+}
+
 // Уважение системной настройки reduced motion
 @media (prefers-reduced-motion: reduce) {
   *,

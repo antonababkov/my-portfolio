@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { themeInitScript } from "@/lib/theme";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import "./globals.scss";
 
 const geistSans = Geist({
@@ -19,9 +21,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
+        <div className="theme-toggle-fixed">
+          <ThemeToggle />
+        </div>
       </body>
     </html>
   );

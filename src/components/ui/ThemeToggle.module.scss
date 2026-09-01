@@ -1,0 +1,31 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-full;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  cursor: pointer;
+  @include m.theme-transition(background-color, color, border-color, transform);
+  @include m.focus-ring;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: rotate(15deg);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.icon {
+  display: inline-flex;
+}
