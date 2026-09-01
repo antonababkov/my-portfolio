@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import Footer from "@/components/footer/Footer";
 import "./globals.scss";
 
 const geistSans = Geist({
@@ -22,9 +23,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} app-body`}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
+        <Footer />
         <div className="theme-toggle-fixed">
           <ThemeToggle />
         </div>

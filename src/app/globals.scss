@@ -47,11 +47,18 @@ a {
   z-index: 100;
 }
 
+.app-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .home-main {
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
   padding: v.$space-9 v.$space-5;
+  flex: 1 0 auto;
 
   @include m.respond-to("desktop") {
     padding-inline: v.$space-8;
