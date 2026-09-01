@@ -1,0 +1,52 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.about {
+  width: 100%;
+  display: grid;
+  gap: v.$space-6;
+
+  @include m.respond-to("tablet") {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.media {
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.content {
+  max-width: 600px;
+  margin-inline: auto;
+
+  @include m.respond-to("tablet") {
+    margin-inline: 0;
+  }
+}
+
+.name {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-4xl;
+  font-weight: v.$font-weight-bold;
+  line-height: v.$line-height-tight;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.position {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-xl;
+  font-weight: v.$font-weight-medium;
+  color: var(--color-accent);
+  margin-top: v.$space-4;
+}
+
+.description {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-lg;
+  line-height: v.$line-height-relaxed;
+  color: var(--color-foreground-secondary);
+  margin-top: v.$space-5;
+}

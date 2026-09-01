@@ -47,6 +47,23 @@ a {
   z-index: 100;
 }
 
+.home-main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: v.$space-9 v.$space-5;
+
+  @include m.respond-to("desktop") {
+    padding-inline: v.$space-8;
+  }
+}
+
+.home-empty {
+  font-family: v.$font-sans;
+  color: var(--color-foreground-muted);
+  text-align: center;
+}
+
 // Уважение системной настройки reduced motion
 @media (prefers-reduced-motion: reduce) {
   *,
