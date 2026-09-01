@@ -1,5 +1,6 @@
 import AboutSection from "@/components/home/AboutSection";
-import { getProfile } from "@/lib/api";
+import ProjectsSection from "@/components/home/ProjectsSection";
+import { getProfile, getProjects } from "@/lib/api";
 
 export const metadata = {
   title: "Моё портфолио",
@@ -7,7 +8,7 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const profile = await getProfile();
+  const [profile, projects] = await Promise.all([getProfile(), getProjects()]);
 
   if (!profile) {
     return (
@@ -20,6 +21,7 @@ export default async function Home() {
   return (
     <main className="home-main">
       <AboutSection profile={profile} />
+      <ProjectsSection projects={projects} />
     </main>
   );
 }

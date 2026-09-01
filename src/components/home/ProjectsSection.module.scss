@@ -1,0 +1,36 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.section {
+  width: 100%;
+  margin-top: v.$space-9;
+}
+
+.header {
+  margin-bottom: v.$space-6;
+}
+
+.heading {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-3xl;
+  font-weight: v.$font-weight-bold;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  padding-bottom: v.$space-8;
+  margin-bottom: v.$space-8;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+}

@@ -1,0 +1,94 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.card {
+  width: 100%;
+  display: grid;
+  gap: v.$space-5;
+
+  @include m.respond-to("tablet") {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.media {
+  position: relative;
+  width: 100%;
+  border-radius: v.$radius-lg;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+
+.slideItem {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--color-border);
+  border-radius: v.$radius-lg;
+  color: var(--color-foreground-muted);
+  font-family: v.$font-sans;
+  font-size: v.$font-size-sm;
+  text-align: center;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: v.$space-3;
+}
+
+.title {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-semibold;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.description {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-base;
+  line-height: v.$line-height-relaxed;
+  color: var(--color-foreground-secondary);
+  margin: 0;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  font-family: v.$font-sans;
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-medium;
+  color: var(--color-accent);
+  transition: color v.$transition-fast;
+
+  &:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+
+  &::after {
+    content: "\2192";
+    margin-left: v.$space-2;
+    transition: transform v.$transition-base;
+  }
+
+  &:hover::after {
+    transform: translateX(4px);
+  }
+}

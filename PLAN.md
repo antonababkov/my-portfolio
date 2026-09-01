@@ -392,7 +392,7 @@ npm-debug.log
 | 3   | **Темы**                     | ThemeToggle, data-theme, prefers-color-scheme        | ✅ Выполнен (01.09.2026) |
 | 4   | **API + БД**                 | Prisma-схема, API-роуты (profile, projects, upload), миграции | ✅ Выполнен (01.09.2026) |
 | 5   | **Главная — «О себе»**       | AboutSection + PhotoSlider                           | ✅ Выполнен (01.09.2026) |
-| 6   | **Главная — «Проекты»**      | ProjectsSection + ProjectCard + слайдеры             |
+| 6   | **Главная — «Проекты»**      | ProjectsSection + ProjectCard + слайдеры             | ✅ Выполнен (01.09.2026) |
 | 7   | **Footer**                   | Контакты, соцсети, политика                          |
 | 8   | **SEO**                      | Meta-теги, OG, sitemap, robots, JSON-LD              |
 | 9   | **Админка — Авторизация**    | Логин, JWT, middleware                               |

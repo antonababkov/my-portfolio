@@ -30,6 +30,17 @@ async function main() {
     },
   });
 
+  await prisma.project.upsert({
+    where: { id: "project-demo-2" },
+    update: {},
+    create: {
+      id: "project-demo-2",
+      title: "Второй проект",
+      description: "Ещё один демонстрационный проект без ссылки.",
+      order: 1,
+    },
+  });
+
   console.log("Seed completed:", profile.fullName);
 }
 
