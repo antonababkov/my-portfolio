@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -15,6 +16,10 @@ const publicDir = path.join(process.cwd(), "public");
 const uploadsDir = path.join(publicDir, "uploads");
 
 export async function POST(request: Request) {
+  if (!(await getSessionUser())) {
+    return unauthorizedResponse();
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
 

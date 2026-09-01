@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -38,6 +39,18 @@ async function main() {
       title: "Второй проект",
       description: "Ещё один демонстрационный проект без ссылки.",
       order: 1,
+    },
+  });
+
+  const adminLogin = process.env.AUTH_ADMIN_LOGIN || "admin";
+  const adminPassword = process.env.AUTH_ADMIN_PASSWORD || "admin123";
+
+  await prisma.admin.upsert({
+    where: { login: adminLogin },
+    update: {},
+    create: {
+      login: adminLogin,
+      password: await bcrypt.hash(adminPassword, 10),
     },
   });
 

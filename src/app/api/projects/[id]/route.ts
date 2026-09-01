@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: Request, { params }: Params) {
+  if (!(await getSessionUser())) {
+    return unauthorizedResponse();
+  }
   const { id } = await params;
   const body: { title?: string; description?: string; link?: string } =
     await request.json();
@@ -34,6 +38,9 @@ export async function PUT(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
+  if (!(await getSessionUser())) {
+    return unauthorizedResponse();
+  }
   const { id } = await params;
 
   const existing = await db.project.findUnique({ where: { id } });
