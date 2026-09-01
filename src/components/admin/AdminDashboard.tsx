@@ -1,11 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { Profile, Project } from "@/types";
-import EditAbout from "./EditAbout";
-import EditProjects from "./EditProjects";
 import LogoutButton from "./LogoutButton";
 import styles from "./AdminDashboard.module.scss";
+
+const EditAbout = dynamic(() => import("./EditAbout"), {
+  loading: () => <p className={styles.muted}>Загрузка…</p>,
+});
+
+const EditProjects = dynamic(() => import("./EditProjects"), {
+  loading: () => <p className={styles.muted}>Загрузка…</p>,
+});
 
 type Tab = "about" | "projects";
 

@@ -22,12 +22,13 @@ export default function PhotoSlider({
     );
   }
 
-  const slides = photos.map((photo) => (
+  const slides = photos.map((photo, index) => (
     <div className={styles.slideItem} key={photo.id} style={{ aspectRatio }}>
       <Image
         src={photo.url}
         alt={photo.alt}
         fill
+        priority={index === 0}
         sizes="(max-width: 768px) 100vw, 50vw"
         className={styles.image}
       />

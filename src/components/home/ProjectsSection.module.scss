@@ -12,10 +12,14 @@
 
 .heading {
   font-family: v.$font-sans;
-  font-size: v.$font-size-3xl;
+  font-size: v.$font-size-2xl;
   font-weight: v.$font-weight-bold;
   color: var(--color-foreground);
   margin: 0;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-3xl;
+  }
 }
 
 .list {

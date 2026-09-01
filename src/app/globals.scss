@@ -57,8 +57,12 @@ a {
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
-  padding: v.$space-9 v.$space-5;
+  padding: v.$space-8 v.$space-5;
   flex: 1 0 auto;
+
+  @include m.respond-to("tablet") {
+    padding-block: v.$space-9;
+  }
 
   @include m.respond-to("desktop") {
     padding-inline: v.$space-8;

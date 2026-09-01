@@ -28,19 +28,31 @@
 
 .name {
   font-family: v.$font-sans;
-  font-size: v.$font-size-4xl;
+  font-size: v.$font-size-2xl;
   font-weight: v.$font-weight-bold;
   line-height: v.$line-height-tight;
   color: var(--color-foreground);
   margin: 0;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-3xl;
+  }
+
+  @include m.respond-to("laptop") {
+    font-size: v.$font-size-4xl;
+  }
 }
 
 .position {
   font-family: v.$font-sans;
-  font-size: v.$font-size-xl;
+  font-size: v.$font-size-lg;
   font-weight: v.$font-weight-medium;
   color: var(--color-accent);
   margin-top: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-xl;
+  }
 }
 
 .description {
