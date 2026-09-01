@@ -1,0 +1,39 @@
+.dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: 16px;
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+}
+
+.dragging {
+  border-color: var(--color-accent);
+  background: var(--color-background-secondary);
+}
+
+.busy {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.text {
+  font-size: 0.875rem;
+  color: var(--color-foreground-secondary);
+}
+
+.error {
+  margin: 8px 0 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}

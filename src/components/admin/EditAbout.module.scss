@@ -1,0 +1,86 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subheading {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.input,
+.textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  font-size: 1rem;
+  font-family: inherit;
+
+  &:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.save {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.photos {
+  margin-top: 8px;
+}
+
+.ok {
+  margin: 0;
+  color: var(--color-success);
+  font-size: 0.875rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}

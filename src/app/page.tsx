@@ -4,6 +4,8 @@ import ProjectsSection from "@/components/home/ProjectsSection";
 import { getProfile, getProjects } from "@/lib/api";
 import { SITE_NAME } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile();
 
