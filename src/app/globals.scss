@@ -1,13 +1,12 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-sans: Arial, Helvetica, sans-serif;
-}
+@use "../styles/variables" as v;
+@use "../styles/mixins" as m;
+@use "../styles/themes";
+@use "../styles/animations" as a;
 
+// Дефолт темы без явного выбора пользователя
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme]) {
+    @include themes.dark-theme;
   }
 }
 
@@ -18,11 +17,15 @@ body {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: v.$font-sans;
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-normal;
+  line-height: v.$line-height-normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  @include m.theme-transition(background-color, color);
 }
 
 * {
@@ -34,4 +37,16 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+// Уважение системной настройки reduced motion
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
