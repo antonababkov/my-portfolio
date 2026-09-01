@@ -390,7 +390,7 @@ npm-debug.log
 | 1   | **Инициализация**            | Next.js + TypeScript + SASS + Prisma + PostgreSQL | ✅ Выполнен (01.09.2026) |
 | 2   | **Дизайн-система**           | Переменные тем (light/dark), миксины, UI-компоненты  | ✅ Выполнен (01.09.2026) |
 | 3   | **Темы**                     | ThemeToggle, data-theme, prefers-color-scheme        | ✅ Выполнен (01.09.2026) |
-| 4   | **API + БД**                 | Prisma-схема, API-роуты (profile, projects, upload), миграции |
+| 4   | **API + БД**                 | Prisma-схема, API-роуты (profile, projects, upload), миграции | ✅ Выполнен (01.09.2026) |
 | 5   | **Главная — «О себе»**       | AboutSection + PhotoSlider                           |
 | 6   | **Главная — «Проекты»**      | ProjectsSection + ProjectCard + слайдеры             |
 | 7   | **Footer**                   | Контакты, соцсети, политика                          |
