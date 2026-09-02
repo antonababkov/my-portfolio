@@ -1,5 +1,6 @@
 @use "../../styles/variables" as v;
 @use "../../styles/animations" as a;
+@use "../../styles/mixins" as m;
 
 .backdrop {
   position: fixed;
@@ -15,7 +16,7 @@
 
 .dialog {
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -25,6 +26,10 @@
   box-shadow: var(--shadow-lg);
   color: var(--color-foreground);
   @include a.animate(scale-in, v.$transition-base);
+
+  @include m.respond-to("tablet") {
+    max-width: 560px;
+  }
 }
 
 .header {
@@ -32,30 +37,46 @@
   align-items: center;
   justify-content: space-between;
   gap: v.$space-4;
-  padding: v.$space-4 v.$space-5;
+  padding: v.$space-3 v.$space-4;
   border-bottom: 1px solid var(--color-border);
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-4 v.$space-5;
+  }
 }
 
 .title {
   font-family: v.$font-sans;
-  font-size: v.$font-size-xl;
+  font-size: v.$font-size-lg;
   font-weight: v.$font-weight-semibold;
   margin: 0;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-xl;
+  }
 }
 
 .body {
-  padding: v.$space-5;
+  padding: v.$space-4;
   overflow-y: auto;
   font-family: v.$font-sans;
   font-size: v.$font-size-base;
   line-height: v.$line-height-relaxed;
   color: var(--color-foreground-secondary);
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-5;
+  }
 }
 
 .footer {
   display: flex;
   justify-content: flex-end;
   gap: v.$space-3;
-  padding: v.$space-4 v.$space-5;
+  padding: v.$space-3 v.$space-4;
   border-top: 1px solid var(--color-border);
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-4 v.$space-5;
+  }
 }

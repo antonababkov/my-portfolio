@@ -1,7 +1,14 @@
+@use "../../../styles/variables" as v;
+@use "../../../styles/mixins" as m;
+
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: v.$space-5;
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-6;
+  }
 }

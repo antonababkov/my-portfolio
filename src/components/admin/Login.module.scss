@@ -1,34 +1,45 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
 .form {
   width: 100%;
   max-width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    max-width: 400px;
+  }
 }
 
 .title {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
+  margin: 0 0 v.$space-2;
+  font-size: v.$font-size-xl;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-2xl;
+  }
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: v.$space-1;
 }
 
 .label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
 }
 
 .input {
-  padding: 10px 12px;
+  padding: v.$space-2 v.$space-3;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-background-elevated);
   color: var(--color-foreground);
-  font-size: 1rem;
+  font-size: v.$font-size-base;
 
   &:focus {
     outline: 2px solid var(--color-accent);
@@ -39,21 +50,21 @@
 .error {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  font-size: v.$font-size-sm;
 }
 
 .submit {
-  padding: 12px;
+  padding: v.$space-3;
   border: none;
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-accent);
   color: var(--color-accent-contrast);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-semibold;
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.6;
+    opacity: v.$opacity-disabled;
     cursor: not-allowed;
   }
 }

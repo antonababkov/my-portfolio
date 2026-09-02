@@ -7,6 +7,8 @@
   justify-content: center;
   width: 40px;
   height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: v.$radius-full;
   background: var(--color-background-elevated);

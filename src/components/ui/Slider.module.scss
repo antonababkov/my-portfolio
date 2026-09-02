@@ -1,4 +1,5 @@
 @use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
 
 .slider {
   position: relative;
@@ -30,8 +31,8 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +42,7 @@
   color: var(--color-foreground);
   box-shadow: var(--shadow-md);
   cursor: pointer;
-  font-size: v.$font-size-lg;
+  font-size: v.$font-size-base;
   font-weight: v.$font-weight-bold;
   transition: background-color v.$transition-fast, opacity v.$transition-fast;
 
@@ -53,30 +54,49 @@
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
+
+  @include m.respond-to("tablet") {
+    width: 40px;
+    height: 40px;
+    font-size: v.$font-size-lg;
+  }
 }
 
 .arrowLeft {
-  left: v.$space-3;
+  left: v.$space-2;
+
+  @include m.respond-to("tablet") {
+    left: v.$space-3;
+  }
 }
 
 .arrowRight {
-  right: v.$space-3;
+  right: v.$space-2;
+
+  @include m.respond-to("tablet") {
+    right: v.$space-3;
+  }
 }
 
 // --- Точки ---
 .dots {
   position: absolute;
-  bottom: v.$space-3;
+  bottom: v.$space-2;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
-  gap: v.$space-2;
+  gap: v.$space-1;
+
+  @include m.respond-to("tablet") {
+    bottom: v.$space-3;
+    gap: v.$space-2;
+  }
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   padding: 0;
   border: none;
   border-radius: v.$radius-full;
@@ -88,6 +108,11 @@
 
   &:hover {
     opacity: 1;
+  }
+
+  @include m.respond-to("tablet") {
+    width: 10px;
+    height: 10px;
   }
 }
 

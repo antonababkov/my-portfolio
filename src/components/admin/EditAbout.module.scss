@@ -1,44 +1,55 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
 .section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: v.$space-5;
 }
 
 .heading {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: v.$font-size-xl;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-2xl;
+  }
 }
 
 .subheading {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: v.$font-size-lg;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    max-width: 480px;
+  }
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: v.$space-1;
 }
 
 .label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
 }
 
 .input,
 .textarea {
-  padding: 10px 12px;
+  padding: v.$space-2 v.$space-3;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-background-elevated);
   color: var(--color-foreground);
-  font-size: 1rem;
+  font-size: v.$font-size-base;
   font-family: inherit;
 
   &:focus {
@@ -54,33 +65,33 @@
 
 .save {
   align-self: flex-start;
-  padding: 10px 20px;
+  padding: v.$space-2 v.$space-5;
   border: none;
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-accent);
   color: var(--color-accent-contrast);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-semibold;
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.6;
+    opacity: v.$opacity-disabled;
     cursor: not-allowed;
   }
 }
 
 .photos {
-  margin-top: 8px;
+  margin-top: v.$space-2;
 }
 
 .ok {
   margin: 0;
   color: var(--color-success);
-  font-size: 0.875rem;
+  font-size: v.$font-size-sm;
 }
 
 .error {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  font-size: v.$font-size-sm;
 }

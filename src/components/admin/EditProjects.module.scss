@@ -1,29 +1,40 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
 .section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    gap: v.$space-5;
+  }
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: v.$space-3;
 }
 
 .heading {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: v.$font-size-xl;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-2xl;
+  }
 }
 
 .addBtn {
-  padding: 8px 16px;
+  padding: v.$space-2 v.$space-4;
   border: 1px solid var(--color-accent);
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: transparent;
   color: var(--color-accent);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-semibold;
   cursor: pointer;
 
   &:hover {
@@ -38,7 +49,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: v.$space-2;
 }
 
 .item {
@@ -46,25 +57,31 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: v.$space-3;
+  padding: v.$space-3 v.$space-4;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-background-elevated);
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-3 v.$space-5;
+  }
 }
 
 .itemContent {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
 .itemTitle {
-  font-weight: 500;
+  font-weight: v.$font-weight-medium;
 }
 
 .itemMeta {
-  font-size: 0.8125rem;
+  font-size: v.$font-size-xs;
   color: var(--color-foreground-muted);
 }
 
@@ -79,16 +96,16 @@
 
 .itemActions {
   display: flex;
-  gap: 8px;
+  gap: v.$space-2;
 }
 
 .editBtn {
-  padding: 6px 12px;
+  padding: v.$space-1 v.$space-3;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: v.$radius-sm;
   background: transparent;
   color: var(--color-foreground);
-  font-size: 0.8125rem;
+  font-size: v.$font-size-xs;
   cursor: pointer;
 
   &:hover {
@@ -97,12 +114,12 @@
 }
 
 .deleteBtn {
-  padding: 6px 12px;
+  padding: v.$space-1 v.$space-3;
   border: 1px solid var(--color-danger);
-  border-radius: 6px;
+  border-radius: v.$radius-sm;
   background: transparent;
   color: var(--color-danger);
-  font-size: 0.8125rem;
+  font-size: v.$font-size-xs;
   cursor: pointer;
 
   &:hover {
@@ -112,12 +129,12 @@
 }
 
 .cancelBtn {
-  padding: 8px 16px;
+  padding: v.$space-2 v.$space-4;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: transparent;
   color: var(--color-foreground);
-  font-size: 0.875rem;
+  font-size: v.$font-size-sm;
   cursor: pointer;
 
   &:hover {
@@ -126,17 +143,17 @@
 }
 
 .confirmDeleteBtn {
-  padding: 8px 20px;
+  padding: v.$space-2 v.$space-5;
   border: none;
-  border-radius: 8px;
+  border-radius: v.$radius-md;
   background: var(--color-danger);
   color: var(--color-accent-contrast);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-semibold;
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.6;
+    opacity: v.$opacity-disabled;
     cursor: not-allowed;
   }
 }
@@ -144,7 +161,11 @@
 .footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: v.$space-2;
+
+  @include m.respond-to("tablet") {
+    gap: v.$space-3;
+  }
 }
 
 .muted {
