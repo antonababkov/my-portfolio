@@ -1,0 +1,6 @@
+# Caddy автоматически получает и renew сертификаты Let's Encrypt (HTTPS).
+
+example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}

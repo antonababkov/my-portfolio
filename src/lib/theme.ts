@@ -2,6 +2,8 @@ export type Theme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "theme";
 
+const THEME_CHANGE_EVENT = "themechange";
+
 export function getStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
   try {
@@ -19,8 +21,22 @@ export function getSystemTheme(): Theme {
     : "light";
 }
 
-export function getCurrentTheme(): Theme {
-  return getStoredTheme() ?? getSystemTheme();
+// Тема, применённая к <html data-theme> инлайн-скриптом до гидрации.
+// Безопасен для SSR: на сервере всегда "light".
+export function getAppliedTheme(): Theme {
+  if (typeof document === "undefined") return "light";
+  const value = document.documentElement.dataset.theme;
+  return value === "dark" ? "dark" : "light";
+}
+
+// Подписка для useSyncExternalStore: уведомляем слушателей при смене темы.
+export function subscribeTheme(onChange: () => void): () => void {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }
 
 export function applyTheme(theme: Theme): void {
@@ -30,14 +46,9 @@ export function applyTheme(theme: Theme): void {
   } catch {
     // localStorage может быть недоступен (приватный режим, ограничения)
   }
-}
-
-export function toggleTheme(): Theme {
-  const next: Theme = getCurrentTheme() === "dark" ? "light" : "dark";
-  applyTheme(next);
-  return next;
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }
 
 // Строка для inline-скрипта в <head>: ставит data-theme до гидрации,
 // чтобы не было «мигания» темы (FOUC).
-export const themeInitScript = `(function(){var k="${THEME_STORAGE_KEY}";var s=null;try{s=window.localStorage.getItem(k);}catch(e){}var t=s==="light"||s==="dark"?s:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;})();`;
+export const themeInitScript = `(function(){var k="${THEME_STORAGE_KEY}";var s=null;try{s=window.localStorage.getItem(k);}catch(e){}var t=s==="light"||s==="dark"?s:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;window.dispatchEvent(new Event("${THEME_CHANGE_EVENT}"));})();`;
