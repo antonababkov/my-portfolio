@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 export async function GET() {
   const projects = await db.project.findMany({
@@ -14,6 +15,11 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
 
   const body: { title?: string; description?: string; link?: string } =

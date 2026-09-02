@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -18,6 +19,11 @@ const uploadsDir = path.join(publicDir, "uploads");
 export async function POST(request: Request) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
 
   const formData = await request.formData();

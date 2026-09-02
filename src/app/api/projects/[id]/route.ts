@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: Request, { params }: Params) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
   const { id } = await params;
   const body: { title?: string; description?: string; link?: string } =
@@ -37,9 +42,13 @@ export async function PUT(request: Request, { params }: Params) {
   return NextResponse.json(project);
 }
 
-export async function DELETE(_request: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
   const { id } = await params;
 

@@ -404,6 +404,43 @@ npm-debug.log
 | 12  | **Оптимизация**              | Terser, lazy loading, image optimization                      | ✅ Выполнен (02.09.2026) |
 | 13  | **Тестирование**             | Кроссбраузерность, Lighthouse, a11y                           | ✅ Выполнен (02.09.2026) |
 | 14  | **Docker и деплой**          | Dockerfile, compose (app + Postgres), volumes, HTTPS на VPS   | ✅ Выполнен (02.09.2026) |
+| 15  | **Безопасность (доработка)** | Rate limiting, CSRF, CSP-заголовки                            | ✅ Выполнен (02.09.2026) |
+
+---
+
+## 14.1. Результаты ревизии этапов 1–14 (02.09.2026)
+
+**Проверено и подтверждено (реализация соответствует плану):**
+- Этап 1 — Next.js/TS/SASS, `output: standalone`, autoprefixer/postcss.
+- Этап 2 — дизайн-система: `_themes.scss`, `_mixins.scss` (`respond-to`), CSS-переменные, акцентный индиго (`#4f46e5`/`#818cf8`), UI-компоненты.
+- Этап 3 — темы: `data-theme`, `prefers-color-scheme`, `ThemeToggle`, `themeInitScript`.
+- Этап 4 — Prisma-схема (Profile/Photo/Project/Admin), миграции, API-роуты.
+- Этап 5 — «О себе» + PhotoSlider; этап 6 — проекты + ProjectCard; этап 7 — Footer (контакты, соцсети, модалки политик).
+- Этап 8 — SEO: meta/OG, canonical, `sitemap.ts`, `robots.ts` (disallow `/api`, `/admin`), JSON-LD Person.
+- Этап 9 — авторизация JWT (httpOnly кука), защита `/admin` через server-layout, проверка во всех мутирующих API-роутах.
+- Этап 10 — админ-панель (формы редактирования, загрузка фото).
+- Этап 11 — адаптивность: `respond-to`-миксины, touch-target ≥44px.
+- Этап 12 — оптимизация: `next/image`+`sizes`+`priority`, `next/dynamic`, `sharp`, Cache-Control на `/uploads`.
+- Этап 13 — доступность: `SkipLink`, focus-trap в `Modal`; `tsc --noEmit` и `npm run lint` — чисто.
+- Этап 14 — Docker-стек работает (seed «Иван Иванов», `/` 200, `POST /api/auth/login` 200 + JWT-кука).
+
+**Были найдены пробелы (из раздела 11 «Безопасность») — все закрыты на этапе 15:**
+1. ~~Rate limiting~~ — реализовано.
+2. ~~CSRF-защита~~ — реализовано.
+3. ~~Content-Security-Policy (CSP) заголовки~~ — реализовано.
+
+**Реализовано на этапе 15 (02.09.2026):**
+- **Rate limiting** — `src/lib/rate-limit.ts` (in-memory, без внешних зависимостей): `rateLimit(key, limit, windowMs)`, `getClientIp()` (учитывает `X-Forwarded-For`/`X-Real-IP` за reverse-proxy). На `/api/auth/login` — максимум **5 попыток/минута на IP**, ответ `429` + `Retry-After`.
+- **CSRF** — `src/lib/csrf.ts` (`assertSameOrigin`): проверка `Origin`/`Referer` на всех мутирующих роутах (`POST/PUT/PATCH/DELETE`) — `/api/auth/login`, `/api/auth/logout`, `/api/profile`, `/api/projects`, `/api/projects/[id]`, `/api/photos`, `/api/photos/[id]`, `/api/upload`. Ответ `403` при чужом источнике. Запросы без `Origin`/`Referer` (схемные/серверные) разрешаются.
+- **CSP + безопасные заголовки** — `src/app/../next.config.ts` `headers()` для `/:path*`: `Content-Security-Policy` (`default-src 'self'`, `img-src 'self' data: blob:`, `style-src 'self' 'unsafe-inline'` и т.д.), `X-Frame-Options: DENY`, `Permissions-Policy` (запрет camera/microphone/geolocation). Сохранены прежние `X-Content-Type-Options`/`Referrer-Policy`; `X-Powered-By` отключён (`poweredByHeader: false`).
+
+**Проверка (Docker-стек, образ пересобран):**
+- `tsc --noEmit` и `eslint` — чисто; `next build` в Docker — успешно.
+- `GET /` → 200; заголовки `CSP`, `X-Frame-Options: DENY`, `Permissions-Policy` присутствуют; `X-Powered-By` отсутствует.
+- Rate limit: 7 неудачных входов подряд → `401, 401, 401, 401, 429, 429, 429`.
+- CSRF: `POST /api/auth/logout` с `Origin: https://evil.example.com` → **403**; с корректным Origin → **200**.
+
+> Примечание (компромисс CSP): `script-src 'self' 'unsafe-inline'` и `style-src 'self' 'unsafe-inline'` требуются из-за инлайн-скриптов (`theme-init`) и `next/font`. Для максимальной жёсткости позже можно перейти на nonce/hash (через middleware), но это потребует доработки генерации HTML.
 
 ---
 
