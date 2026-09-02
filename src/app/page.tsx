@@ -31,7 +31,7 @@ export default async function Home() {
 
   if (!profile) {
     return (
-      <main className="home-main">
+      <main id="main" className="home-main">
         <p className="home-empty">Профиль ещё не заполнен.</p>
       </main>
     );
@@ -46,7 +46,7 @@ export default async function Home() {
   };
 
   return (
-    <main className="home-main">
+    <main id="main" className="home-main">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}

@@ -10,7 +10,7 @@ export default async function AdminLoginPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div id="main" className={styles.page}>
       <Login />
     </div>
   );

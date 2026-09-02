@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <main className={styles.main}>
+    <main id="main" className={styles.main}>
       <header className={styles.header}>
         <h1 className={styles.title}>Админ-панель</h1>
         <LogoutButton />
