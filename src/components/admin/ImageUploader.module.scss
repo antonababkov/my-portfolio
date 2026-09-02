@@ -1,0 +1,47 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: v.$space-4;
+  border: 2px dashed var(--color-border);
+  border-radius: v.$radius-md;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color v.$transition-fast, background-color v.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  @include m.respond-to("tablet") {
+    min-height: 80px;
+    padding: v.$space-5;
+  }
+}
+
+.dragging {
+  border-color: var(--color-accent);
+  background: var(--color-background-secondary);
+}
+
+.busy {
+  opacity: v.$opacity-disabled;
+  cursor: wait;
+}
+
+.text {
+  font-size: v.$font-size-sm;
+  color: var(--color-foreground-secondary);
+}
+
+.error {
+  margin: v.$space-2 0 0;
+  color: var(--color-danger);
+  font-size: v.$font-size-sm;
+}

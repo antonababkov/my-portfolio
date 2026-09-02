@@ -1,0 +1,74 @@
+// ============================================================
+// Дизайн-система: адаптивные миксины
+// Подход: mobile-first. Использование:
+//   @include respond-to("tablet") { ... }
+// ============================================================
+
+@use "sass:list";
+
+@use "variables" as v;
+
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == "tablet" {
+    @media (min-width: v.$breakpoint-tablet) {
+      @content;
+    }
+  } @else if $breakpoint == "laptop" {
+    @media (min-width: v.$breakpoint-laptop) {
+      @content;
+    }
+  } @else if $breakpoint == "desktop" {
+    @media (min-width: v.$breakpoint-desktop) {
+      @content;
+    }
+  } @else {
+    @error "Unknown breakpoint `#{$breakpoint}`. Allowed: tablet, laptop, desktop.";
+  }
+}
+
+// Центрирование контейнера с горизонтальными отступами
+@mixin container(
+  $max-width: 1200px,
+  $padding-x: v.$space-5,
+  $padding-x-desktop: v.$space-8
+) {
+  width: 100%;
+  max-width: $max-width;
+  margin-inline: auto;
+  padding-inline: $padding-x;
+
+  @include respond-to("desktop") {
+    padding-inline: $padding-x-desktop;
+  }
+}
+
+// Скрыть элемент визуально, но оставить доступным для скринридеров
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Плавная прокрутка/переход для темы
+@mixin theme-transition($props...) {
+  $list: ();
+  @each $prop in $props {
+    $list: list.append($list, $prop v.$transition-base, comma);
+  }
+  @if list.length($list) == 0 {
+    $list: color v.$transition-base, background-color v.$transition-base;
+  }
+  transition: $list;
+}
+
+// Фокус-стили для доступности
+@mixin focus-ring {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

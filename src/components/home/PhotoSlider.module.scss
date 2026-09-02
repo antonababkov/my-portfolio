@@ -1,0 +1,31 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.slideItem {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--color-border);
+  border-radius: v.$radius-lg;
+  color: var(--color-foreground-muted);
+  font-family: v.$font-sans;
+  font-size: v.$font-size-sm;
+  text-align: center;
+  padding: v.$space-5;
+
+  @include m.respond-to("tablet") {
+    aspect-ratio: 16 / 9;
+  }
+}

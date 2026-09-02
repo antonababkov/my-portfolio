@@ -1,0 +1,174 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    gap: v.$space-5;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: v.$space-3;
+}
+
+.heading {
+  margin: 0;
+  font-size: v.$font-size-xl;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-2xl;
+  }
+}
+
+.addBtn {
+  padding: v.$space-2 v.$space-4;
+  border: 1px solid var(--color-accent);
+  border-radius: v.$radius-md;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-semibold;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
+  }
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-2;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: v.$space-3;
+  padding: v.$space-3 v.$space-4;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-md;
+  background: var(--color-background-elevated);
+
+  @include m.respond-to("tablet") {
+    padding: v.$space-3 v.$space-5;
+  }
+}
+
+.itemContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.itemTitle {
+  font-weight: v.$font-weight-medium;
+}
+
+.itemMeta {
+  font-size: v.$font-size-xs;
+  color: var(--color-foreground-muted);
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.itemActions {
+  display: flex;
+  gap: v.$space-2;
+}
+
+.editBtn {
+  padding: v.$space-1 v.$space-3;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-sm;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: v.$font-size-xs;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-background-secondary);
+  }
+}
+
+.deleteBtn {
+  padding: v.$space-1 v.$space-3;
+  border: 1px solid var(--color-danger);
+  border-radius: v.$radius-sm;
+  background: transparent;
+  color: var(--color-danger);
+  font-size: v.$font-size-xs;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-danger);
+    color: var(--color-accent-contrast);
+  }
+}
+
+.cancelBtn {
+  padding: v.$space-2 v.$space-4;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-md;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: v.$font-size-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-background-secondary);
+  }
+}
+
+.confirmDeleteBtn {
+  padding: v.$space-2 v.$space-5;
+  border: none;
+  border-radius: v.$radius-md;
+  background: var(--color-danger);
+  color: var(--color-accent-contrast);
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-semibold;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: v.$opacity-disabled;
+    cursor: not-allowed;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: v.$space-2;
+
+  @include m.respond-to("tablet") {
+    gap: v.$space-3;
+  }
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-foreground-muted);
+}

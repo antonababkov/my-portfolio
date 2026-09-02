@@ -1,0 +1,66 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.about {
+  width: 100%;
+  display: grid;
+  gap: v.$space-6;
+
+  @include m.respond-to("tablet") {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.media {
+  max-width: 480px;
+  margin-inline: auto;
+  border-radius: v.$radius-lg;
+  background: var(--color-background-secondary);
+}
+
+.content {
+  max-width: 600px;
+  margin-inline: auto;
+
+  @include m.respond-to("tablet") {
+    margin-inline: 0;
+  }
+}
+
+.name {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-bold;
+  line-height: v.$line-height-tight;
+  color: var(--color-foreground);
+  margin: 0;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-3xl;
+  }
+
+  @include m.respond-to("laptop") {
+    font-size: v.$font-size-4xl;
+  }
+}
+
+.position {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-lg;
+  font-weight: v.$font-weight-medium;
+  color: var(--color-accent);
+  margin-top: v.$space-4;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-xl;
+  }
+}
+
+.description {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-lg;
+  line-height: v.$line-height-relaxed;
+  color: var(--color-foreground-secondary);
+  margin-top: v.$space-5;
+}

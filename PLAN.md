@@ -2,25 +2,25 @@
 
 ## 1. Инициализация проекта
 
-| Шаг | Описание                                                         |
-| --- | ---------------------------------------------------------------- |
-| 1.1 | `npx create-next-app@latest` с TypeScript, App Router, SASS      |
-| 1.2 | Установить зависимости: `postcss`, `autoprefixer`, `terser`      |
+| Шаг | Описание                                                                                 |
+| --- | ---------------------------------------------------------------------------------------- |
+| 1.1 | `npx create-next-app@latest` с TypeScript, App Router, SASS                              |
+| 1.2 | Установить зависимости: `postcss`, `autoprefixer`, `terser`                              |
 | 1.3 | Настроить `tsconfig.json`, `next.config.js` (оптимизация сборки, `output: 'standalone'`) |
-| 1.4 | Настроить `postcss.config.js` — используем чистый SASS           |
+| 1.4 | Настроить `postcss.config.js` — используем чистый SASS                                   |
 
 ---
 
 ## 2. Решения (подтверждено)
 
-| #   | Вопрос                    | Решение                                             |
-| --- | ------------------------- | --------------------------------------------------- |
-| 1   | **Vite vs Next.js**       | **Next.js** — SEO из коробки, SSR                   |
-| 2   | **Хранение данных**       | **PostgreSQL + Prisma** — надёжная, масштабируемая СУБД |
-| 3   | **Авторизация**           | **jsonwebtoken** (httpOnly cookie), bcrypt для пароля |
-| 4   | **Загрузка файлов**       | **Локально** в `public/uploads/`                    |
-| 5   | **Дизайн**                | Подбираем сами. Поддержка **тёмной и светлой тем**   |
-| 6   | **Деплой**                | **Docker на VPS** (PostgreSQL в контейнере + локальные файлы) |
+| #   | Вопрос              | Решение                                                       |
+| --- | ------------------- | ------------------------------------------------------------- |
+| 1   | **Vite vs Next.js** | **Next.js** — SEO из коробки, SSR                             |
+| 2   | **Хранение данных** | **PostgreSQL + Prisma** — надёжная, масштабируемая СУБД       |
+| 3   | **Авторизация**     | **jsonwebtoken** (httpOnly cookie), bcrypt для пароля         |
+| 4   | **Загрузка файлов** | **Локально** в `public/uploads/`                              |
+| 5   | **Дизайн**          | Подбираем сами. Поддержка **тёмной и светлой тем**            |
+| 6   | **Деплой**          | **Docker на VPS** (PostgreSQL в контейнере + локальные файлы) |
 
 ---
 
@@ -312,6 +312,7 @@ CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
 ```
 
 Важно:
+
 - Базовый образ **`node:20-slim`**, не `alpine` — нативные модули (sharp, bcrypt, Prisma) легко ломаются на alpine/musl
 - `npx prisma generate` — на этапе сборки
 - `npx prisma migrate deploy` — при старте контейнера (применение миграций БД)
@@ -328,7 +329,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db-data:/var/lib/postgresql/data   # данные БД — на volume
+      - db-data:/var/lib/postgresql/data # данные БД — на volume
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -338,7 +339,7 @@ services:
   app:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.dockerignore  # путь уточнить
+      dockerfile: docker/Dockerfile.dockerignore # путь уточнить
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
@@ -350,7 +351,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       AUTH_SECRET: ${AUTH_SECRET}
     volumes:
-      - uploads:/app/public/uploads   # загруженные изображения
+      - uploads:/app/public/uploads # загруженные изображения
 
 volumes:
   db-data:
@@ -358,6 +359,7 @@ volumes:
 ```
 
 Замечания:
+
 - **Postgres** развёрнут отдельным контейнером, его данные — на **volume** `db-data` (переживают пересборку)
 - Загруженные картинки — на **volume** `uploads`
 - Приложение стартует только после готовности БД (`healthcheck` + `depends_on`)
@@ -366,8 +368,8 @@ volumes:
 
 ### 12.3. Обратный прокси + HTTPS
 
-  - **Caddy** (рекомендуется): автоматический HTTPS, минимальная конфигурация
-  - `Caddyfile`: `domain.ru { reverse_proxy app:3000 }`
+- **Caddy** (рекомендуется): автоматический HTTPS, минимальная конфигурация
+- `Caddyfile`: `domain.ru { reverse_proxy app:3000 }`
 - Или Traefik / Nginx + Let's Encrypt
 
 ### 12.4. .dockerignore
@@ -381,29 +383,32 @@ public/uploads
 .env*
 npm-debug.log
 ```
+
 ---
 
 ## 13. Порядок реализации (этапы)
 
-| #   | Этап                         | Описание                                             |
-| --- | ---------------------------- | ---------------------------------------------------- |
-| 1   | **Инициализация**            | Next.js + TypeScript + SASS + Prisma + PostgreSQL | ✅ Выполнен (01.09.2026) |
-| 2   | **Дизайн-система**           | Переменные тем (light/dark), миксины, UI-компоненты  |
-| 3   | **Темы**                     | ThemeToggle, data-theme, prefers-color-scheme        |
-| 4   | **API + БД**                 | Prisma-схема, API-роуты (profile, projects, upload), миграции |
-| 5   | **Главная — «О себе»**       | AboutSection + PhotoSlider                           |
-| 6   | **Главная — «Проекты»**      | ProjectsSection + ProjectCard + слайдеры             |
-| 7   | **Footer**                   | Контакты, соцсети, политика                          |
-| 8   | **SEO**                      | Meta-теги, OG, sitemap, robots, JSON-LD              |
-| 9   | **Админка — Авторизация**    | Логин, JWT, middleware                               |
-| 10  | **Админка — Редактирование** | Формы редактирования всего контента                  |
-| 11  | **Адаптивность**             | Тестирование под все брейкпоинты (в обеих темах)     |
-| 12  | **Оптимизация**              | Terser, lazy loading, image optimization             |
-| 13  | **Тестирование**             | Кроссбраузерность, Lighthouse, a11y                  |
-| 14  | **Docker и деплой**          | Dockerfile, compose (app + Postgres), volumes, HTTPS на VPS |
+| #   | Этап                         | Описание                                                      |
+| --- | ---------------------------- | ------------------------------------------------------------- | ------------------------ |
+| 1   | **Инициализация**            | Next.js + TypeScript + SASS + Prisma + PostgreSQL             | ✅ Выполнен (01.09.2026) |
+| 2   | **Дизайн-система**           | Переменные тем (light/dark), миксины, UI-компоненты           | ✅ Выполнен (01.09.2026) |
+| 3   | **Темы**                     | ThemeToggle, data-theme, prefers-color-scheme                 | ✅ Выполнен (01.09.2026) |
+| 4   | **API + БД**                 | Prisma-схема, API-роуты (profile, projects, upload), миграции | ✅ Выполнен (01.09.2026) |
+| 5   | **Главная — «О себе»**       | AboutSection + PhotoSlider                                    | ✅ Выполнен (01.09.2026) |
+| 6   | **Главная — «Проекты»**      | ProjectsSection + ProjectCard + слайдеры                      | ✅ Выполнен (01.09.2026) |
+| 7   | **Footer**                   | Контакты, соцсети, политика                                   | ✅ Выполнен (01.09.2026) |
+| 8   | **SEO**                      | Meta-теги, OG, sitemap, robots, JSON-LD                       | ✅ Выполнен (01.09.2026) |
+| 9   | **Админка — Авторизация**    | Логин, JWT, middleware                                        | ✅ Выполнен (01.09.2026) |
+| 10  | **Админка — Редактирование** | Формы редактирования всего контента                           | ✅ Выполнен (01.09.2026) |
+| 11  | **Адаптивность**             | Тестирование под все брейкпоинты (в обеих темах)              | ✅ Выполнен (02.09.2026) |
+| 12  | **Оптимизация**              | Terser, lazy loading, image optimization                      | ✅ Выполнен (02.09.2026) |
+| 13  | **Тестирование**             | Кроссбраузерность, Lighthouse, a11y                           |
+| 14  | **Docker и деплой**          | Dockerfile, compose (app + Postgres), volumes, HTTPS на VPS   |
 
 ---
 
 ## 14. Открытый вопрос
 
 1. **Конкретный стиль**: макета нет, подбираем сами. Зафиксированы тёмная и светлая темы и минималистичный подход, но детали (акцентный цвет, шрифт, отступы) — определим на этапе дизайн-системы.
+
+> **Решено на этапе 2 (01.09.2026):** минималистичный стиль. Акцентный цвет — индиго: `#4f46e5` (light) / `#818cf8` (dark). Шрифты — Geist/Geist Mono (next/font). Все цвета — через CSS-переменные (`_themes.scss`), SASS-переменные — только шрифты/брейкпоинты/отступы. UI-компоненты: Button, Modal, Loader, Slider.
