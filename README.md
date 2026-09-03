@@ -43,7 +43,7 @@ my-portfolio/
 ├─ src/
 │  ├─ app/                 # App Router (страницы, Route Handlers: api/auth, api/profile, api/projects, api/photos, api/upload)
 │  ├─ components/          # home/, admin/, ui/, footer/
-│  ├─ lib/                 # db.ts, auth.ts, api.ts, constants.ts, theme.ts
+│  ├─ lib/                 # db.ts, auth.ts, api.ts, constants.ts, theme.ts, csrf.ts, rate-limit.ts
 │  └─ generated/prisma/    # сгенерированный Prisma-клиент (не редактировать)
 ├─ public/uploads/         # загруженные изображения
 ├─ .env.example            # шаблон переменных окружения
@@ -90,7 +90,8 @@ SITE_URL=http://localhost:3000
 
 ```bash
 # 1. Настроить окружение
-cp .env.example .env   # и заполнить значения
+cp .env.example .env   # Windows PowerShell: Copy-Item .env.example .env
+# и заполнить значения
 
 # 2. Собрать и поднять весь стек (db → migrate → app)
 docker compose --env-file .env -f docker/docker-compose.yml up -d --build
@@ -98,6 +99,7 @@ docker compose --env-file .env -f docker/docker-compose.yml up -d --build
 # 3. Проверка
 docker compose -f docker/docker-compose.yml logs migrate   # "Seed completed: ..."
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
+# Windows PowerShell: (Invoke-WebRequest -Uri http://localhost:3000).StatusCode
 ```
 
 Приложение доступно на `http://localhost:3000`. Админ-панель — `http://localhost:3000/admin`, вход по `AUTH_ADMIN_LOGIN` / `AUTH_ADMIN_PASSWORD`.
@@ -193,7 +195,7 @@ Multi-stage сборка:
 
 ## Траблшутинг
 
-- **`localhost:3000` отвечает неправильное приложение** — порт может «перекрываться» запущенным отдельно `next dev`. Проверьте, какой процесс слушает 3000: `netstat -ano | findstr :3000`. Остановите лишний dev-сервер, оставив только Docker-проки.
+- **`localhost:3000` отвечает неправильное приложение** — порт может «перекрываться» запущенным отдельно `next dev`. Проверьте, какой процесс слушает 3000: `netstat -ano | findstr :3000` (Windows) или `lsof -i :3000` (Linux/macOS). Остановите лишний dev-сервер, оставив только Docker-проки.
 - **Логин возвращает 401 сразу после первого запуска** — проверьте, что `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` дошли до `migrate`-контейнера, и что админ действительно создан при seed (`docker compose logs migrate`).
 - **Смена пароля админа** не применяется после повторного запуска — сид не перезаписывает существующего админа. Обновите пароль в БД или пересоздайте стек с чистыми volumes: `docker compose down -v`.
 - **Не применяются изменения при `up --build`** — убедитесь, что Docker-кэш не выдаёт старый слой: используйте `docker compose build --no-cache` при сомнениях.
