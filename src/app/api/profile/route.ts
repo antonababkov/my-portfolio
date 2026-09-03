@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 export async function GET() {
   const profile = await db.profile.findFirst({
@@ -17,6 +18,11 @@ export async function GET() {
 export async function PUT(request: Request) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
 
   const body: { fullName?: string; position?: string; description?: string } =

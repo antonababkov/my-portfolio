@@ -1,0 +1,24 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.skipLink {
+  position: fixed;
+  top: v.$space-2;
+  left: v.$space-2;
+  z-index: 1200;
+  padding: v.$space-2 v.$space-4;
+  border-radius: v.$radius-md;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-family: v.$font-sans;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-semibold;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform v.$transition-fast;
+
+  &:focus-visible {
+    transform: translateY(0);
+    outline: none;
+  }
+}

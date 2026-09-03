@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import Footer from "@/components/footer/Footer";
 import "./globals.scss";
+import { SkipLink } from "@/components/ui/SkipLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +45,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} app-body`}>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+        <SkipLink />
         {children}
         <Footer />
         <div className="theme-toggle-fixed">

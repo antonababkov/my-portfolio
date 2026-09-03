@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 const AttachSchema = z.object({
   url: z.string().min(1),
@@ -20,6 +21,11 @@ const ReorderSchema = z.object({
 export async function POST(request: Request) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
 
   const parsed = AttachSchema.safeParse(await request.json());
@@ -55,6 +61,11 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
 
   const parsed = ReorderSchema.safeParse(await request.json());

@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { assertSameOrigin } from "@/lib/csrf";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -14,6 +15,10 @@ const PatchSchema = z.object({
 export async function PATCH(request: Request, { params }: Params) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
   const { id } = await params;
 
@@ -38,9 +43,13 @@ export async function PATCH(request: Request, { params }: Params) {
   return NextResponse.json(photo);
 }
 
-export async function DELETE(_request: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   if (!(await getSessionUser())) {
     return unauthorizedResponse();
+  }
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
   }
   const { id } = await params;
 

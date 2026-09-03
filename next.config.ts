@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 
+const csp = [
+  "default-src 'self'",
+  // next/font инлайнит стили шрифтов через <style>
+  "style-src 'self' 'unsafe-inline'",
+  // theme-init (inline) и JSON-LD инлайнятся напрямую в HTML
+  "script-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
@@ -20,6 +34,12 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          { key: "Content-Security-Policy", value: csp },
         ],
       },
     ];
