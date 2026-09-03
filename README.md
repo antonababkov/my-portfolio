@@ -187,7 +187,7 @@ Multi-stage сборка:
 - **Photo** — фото профиля или проекта, alt, порядок.
 - **Admin** — логин + bcrypt-хэш пароля для входа в админ-панель.
 
-Генерация клиента из приложения: `src/generated/prisma`. Конфиг Prisma v7 живёт в `prisma7.config.ts` (**не** `prisma.config.ts`).
+Генерация клиента из приложения: `src/generated/prisma`. Конфиг Prisma v7 в `prisma7.config.ts` (**не** `prisma.config.ts`).
 
 ---
 
