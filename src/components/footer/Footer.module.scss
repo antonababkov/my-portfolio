@@ -87,7 +87,7 @@
   cursor: pointer;
   text-align: left;
   @include m.theme-transition(color);
-  @include m.focus-ring;
+  /* @include m.focus-ring; */
 
   &:hover {
     color: var(--color-accent);
