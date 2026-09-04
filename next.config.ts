@@ -1,11 +1,15 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const csp = [
   "default-src 'self'",
   // next/font инлайнит стили шрифтов через <style>
   "style-src 'self' 'unsafe-inline'",
   // theme-init (inline) и JSON-LD инлайнятся напрямую в HTML
-  "script-src 'self' 'unsafe-inline'",
+  // unsafe-eval нужен React в dev-режиме (hot-reload, стек-трейсы)
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+
   "img-src 'self' data: blob:",
   "font-src 'self'",
   "connect-src 'self'",

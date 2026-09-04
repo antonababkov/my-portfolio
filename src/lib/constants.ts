@@ -10,7 +10,6 @@ export const CONTACTS = {
 export const SOCIALS = [
   { id: "github", label: "GitHub", href: "https://github.com" },
   { id: "telegram", label: "Telegram", href: "https://t.me" },
-  { id: "linkedin", label: "LinkedIn", href: "https://linkedin.com" },
 ] as const;
 
 // Тексты политик для модальных окон в футере.

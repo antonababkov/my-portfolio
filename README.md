@@ -71,6 +71,9 @@ POSTGRES_USER=portfolio
 POSTGRES_PASSWORD=replace-with-strong-password
 POSTGRES_DB=portfolio
 
+# URL подключения (нужен для Prisma)
+DATABASE_URL="postgresql://portfolio:replace-with-strong-password@localhost:5432/portfolio"
+
 # Админ, создаётся при seed
 AUTH_ADMIN_LOGIN=admin
 AUTH_ADMIN_PASSWORD=replace-with-strong-password
@@ -118,15 +121,53 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 
 ## Запуск (локальная разработка)
 
+### 1. Установить зависимости
+
 ```bash
 npm install
+```
 
-# 1. Настроить .env (см. .env.example) + убедиться, что есть база
-# 2. Применить миграции и сид
+### 2. Создать пользователя и базу PostgreSQL
+
+Подключитесь к PostgreSQL от имени суперпользователя (`postgres`):
+
+```bash
+psql -U postgres
+```
+
+Выполните SQL-команды:
+
+```sql
+-- Создать пользователя и базу данных
+CREATE USER portfolio WITH PASSWORD 'replace-with-strong-password';
+CREATE DATABASE portfolio OWNER portfolio;
+
+-- Выдать право на создание баз (нужно для Prisma shadow database)
+ALTER USER portfolio CREATEDB;
+
+\q
+```
+
+### 3. Настроить переменные окружения
+
+Скопируйте `.env.example` в `.env` и заполните значения. Убедитесь, что `DATABASE_URL` совпадает с данными PostgreSQL:
+
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+### 4. Применить миграции и сид
+
+```bash
+npx prisma generate
 npx prisma migrate dev
 npx tsx prisma/seed.ts
+```
 
-# 3. Запустить dev-сервер
+### 5. Запустить dev-сервер
+
+```bash
 npm run dev
 ```
 
