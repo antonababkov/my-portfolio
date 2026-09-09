@@ -21,38 +21,6 @@
   background: var(--color-background-secondary);
 }
 
-.slideItem {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-}
-
-.imageWrap {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.image {
-  object-fit: cover;
-}
-
-.caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  padding: v.$space-2 v.$space-3;
-  font-family: v.$font-sans;
-  font-size: v.$font-size-sm;
-  line-height: v.$line-height-normal;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 1;
-}
-
 .placeholder {
   width: 100%;
   height: 100%;

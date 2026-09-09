@@ -19,27 +19,8 @@ async function main() {
     },
   });
 
-  await prisma.project.upsert({
-    where: { id: "project-demo-1" },
-    update: {},
-    create: {
-      id: "project-demo-1",
-      title: "Демо-проект",
-      description: "Пример карточки проекта для портфолио.",
-      link: "https://example.com",
-      order: 0,
-    },
-  });
-
-  await prisma.project.upsert({
-    where: { id: "project-demo-2" },
-    update: {},
-    create: {
-      id: "project-demo-2",
-      title: "Второй проект",
-      description: "Ещё один демонстрационный проект без ссылки.",
-      order: 1,
-    },
+  await prisma.project.deleteMany({
+    where: { id: { in: ["project-demo-1", "project-demo-2"] } },
   });
 
   const adminLogin = process.env.AUTH_ADMIN_LOGIN || "admin";

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import ImageUploader from "./ImageUploader";
+import { photoUrl } from "@/lib/photoUrl";
 import styles from "./PhotoManager.module.scss";
 
 type Photo = {
@@ -121,7 +122,11 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
 
   return (
     <div className={styles.wrapper}>
-      <ImageUploader onUploaded={attach} disabled={busy} />
+      <ImageUploader
+        onUploaded={attach}
+        disabled={busy}
+        variant={"profileId" in owner ? "profile" : "project"}
+      />
 
       {error && <p className={styles.error} role="alert">{error}</p>}
 
@@ -131,7 +136,7 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
             <li key={photo.id} className={styles.item}>
               <div className={styles.thumb}>
                 <Image
-                  src={photo.url}
+                  src={photoUrl(photo.url)}
                   alt={photo.alt}
                   width={96}
                   height={96}

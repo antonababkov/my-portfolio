@@ -1,0 +1,110 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+@use "../../styles/animations" as a;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: v.$space-4;
+  background: rgba(0, 0, 0, 0.85);
+  @include a.animate(fade-in, v.$transition-fast);
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  @include a.animate(scale-in, v.$transition-base);
+}
+
+.image {
+  display: block;
+  max-width: 92vw;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: v.$radius-lg;
+  box-shadow: var(--shadow-lg);
+}
+
+.close {
+  position: absolute;
+  top: calc(-1 * v.$space-5);
+  right: calc(-1 * v.$space-1);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: v.$radius-full;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  font-size: v.$font-size-lg;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+
+  @include m.respond-to("tablet") {
+    top: calc(-1 * v.$space-6);
+    right: calc(-1 * v.$space-4);
+    width: 44px;
+    height: 44px;
+    font-size: v.$font-size-xl;
+  }
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: v.$radius-full;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  font-size: v.$font-size-2xl;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+
+  @include m.respond-to("tablet") {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.navPrev {
+  left: calc(-1 * v.$space-5);
+}
+
+.navNext {
+  right: calc(-1 * v.$space-5);
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * v.$space-6);
+  margin: 0;
+  padding: v.$space-2 v.$space-3;
+  font-family: v.$font-sans;
+  font-size: v.$font-size-sm;
+  line-height: v.$line-height-normal;
+  color: #ffffff;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: v.$radius-md;
+}

@@ -10,7 +10,7 @@ export default function AboutSection({ profile }: AboutSectionProps) {
   return (
     <section className={styles.about} id="about">
       <div className={styles.media}>
-        <PhotoSlider photos={profile.photos} />
+        <PhotoSlider photos={profile.photos} aspectRatio="1 / 1" />
       </div>
       <div className={styles.content}>
         <h1 className={styles.name}>{profile.fullName}</h1>
