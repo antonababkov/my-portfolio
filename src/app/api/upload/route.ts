@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
 
@@ -12,6 +13,9 @@ const EXT_BY_MIME: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
+
+const PROFILE_MAX_SIZE = 394;
+const PROFILE_MIN_SIZE = 120;
 
 const publicDir = path.join(process.cwd(), "public");
 const uploadsDir = path.join(publicDir, "uploads");
@@ -53,8 +57,29 @@ export async function POST(request: Request) {
   const extension = EXT_BY_MIME[file.type];
   const fileName = `${randomUUID()}.${extension}`;
 
+  const variant = formData.get("variant");
+  let buffer = Buffer.from(await file.arrayBuffer());
+
+  if (variant === "profile") {
+    const metadata = await sharp(buffer).metadata();
+    const { width, height } = metadata;
+    if (!width || !height || width < PROFILE_MIN_SIZE || height < PROFILE_MIN_SIZE) {
+      return NextResponse.json(
+        { error: "Фото должно быть не меньше 120×120 px" },
+        { status: 400 }
+      );
+    }
+    buffer = await sharp(buffer)
+      .resize({
+        width: PROFILE_MAX_SIZE,
+        height: PROFILE_MAX_SIZE,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .toBuffer();
+  }
+
   await mkdir(uploadsDir, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(uploadsDir, fileName), buffer);
 
   return NextResponse.json({

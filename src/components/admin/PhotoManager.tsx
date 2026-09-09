@@ -121,7 +121,11 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
 
   return (
     <div className={styles.wrapper}>
-      <ImageUploader onUploaded={attach} disabled={busy} />
+      <ImageUploader
+        onUploaded={attach}
+        disabled={busy}
+        variant={"profileId" in owner ? "profile" : "project"}
+      />
 
       {error && <p className={styles.error} role="alert">{error}</p>}
 

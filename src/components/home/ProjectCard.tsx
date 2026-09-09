@@ -1,5 +1,4 @@
-import Image from "next/image";
-import Slider from "@/components/ui/Slider";
+import ProjectGallery from "./ProjectGallery";
 import type { Project } from "@/types";
 import styles from "./ProjectCard.module.scss";
 
@@ -8,39 +7,11 @@ type ProjectCardProps = {
 };
 
 export default function ProjectCard({ project }: ProjectCardProps) {
-  const slides =
-    project.photos.length > 0
-      ? project.photos.map((photo, i) => (
-          <div
-            key={photo.id}
-            className={project.photos.length > 1 ? `${styles.slideItem} ${styles.withDots}` : styles.slideItem}
-          >
-            <div className={styles.imageWrap}>
-              <Image
-                src={photo.url}
-                alt={photo.alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                loading={i === 0 ? "eager" : "lazy"}
-                className={styles.image}
-              />
-            </div>
-            {photo.description && (
-              <p className={styles.caption}>{photo.description}</p>
-            )}
-          </div>
-        ))
-      : null;
-
   return (
     <section className={styles.card} id={`project-${project.id}`} aria-labelledby={`project-title-${project.id}`}>
       <div className={styles.media}>
-        {slides ? (
-          <Slider
-            items={slides}
-            ariaLabel={`Фотографии проекта: ${project.title}`}
-            slideDuration={400}
-          />
+        {project.photos.length > 0 ? (
+          <ProjectGallery photos={project.photos} />
         ) : (
           <div className={styles.placeholder}>Фото пока не добавлены</div>
         )}

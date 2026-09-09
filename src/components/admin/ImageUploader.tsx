@@ -7,12 +7,14 @@ type ImageUploaderProps = {
   onUploaded: (url: string, name: string) => void;
   label?: string;
   disabled?: boolean;
+  variant?: "profile" | "project";
 };
 
 export default function ImageUploader({
   onUploaded,
   label = "Перетащите изображение сюда или нажмите для выбора",
   disabled = false,
+  variant = "project",
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -39,6 +41,7 @@ export default function ImageUploader({
         }
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("variant", variant);
 
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
