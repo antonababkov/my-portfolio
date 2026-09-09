@@ -30,22 +30,20 @@ export default function Slider({
   ariaLabel = "Слайдер",
 }: SliderProps) {
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState<"left" | "right">("right");
   const touchX = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const count = items.length;
 
   const goTo = useCallback(
-    (next: number, dir: "left" | "right") => {
-      setDirection(dir);
+    (next: number) => {
       setIndex(((next % count) + count) % count);
     },
     [count]
   );
 
-  const next = useCallback(() => goTo(index + 1, "right"), [goTo, index]);
-  const prev = useCallback(() => goTo(index - 1, "left"), [goTo, index]);
+  const next = useCallback(() => goTo(index + 1), [goTo, index]);
+  const prev = useCallback(() => goTo(index - 1), [goTo, index]);
 
   useEffect(() => {
     if (!autoPlay || count <= 1) return;
@@ -99,7 +97,7 @@ export default function Slider({
         style={{ ["--slide-duration" as string]: `${slideDuration}ms` }}
       >
         <div
-          className={`${styles.track} ${styles[direction]}`}
+          className={styles.track}
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {items.map((item, i) => (
@@ -144,7 +142,7 @@ export default function Slider({
               key={i}
               type="button"
               className={`${styles.dot} ${i === index ? styles.dotActive : ""}`}
-              onClick={() => goTo(i, i > index ? "right" : "left")}
+              onClick={() => goTo(i)}
               aria-label={`Перейти к слайду ${i + 1}`}
               aria-current={i === index}
             />

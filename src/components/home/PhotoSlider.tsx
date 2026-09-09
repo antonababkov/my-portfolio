@@ -23,7 +23,10 @@ export default function PhotoSlider({
   }
 
   const slides = photos.map((photo, index) => (
-    <div className={styles.slideItem} key={photo.id}>
+    <div
+      className={photos.length > 1 ? `${styles.slideItem} ${styles.withDots}` : styles.slideItem}
+      key={photo.id}
+    >
       <div className={styles.imageWrap} style={{ aspectRatio }}>
         <Image
           src={photo.url}

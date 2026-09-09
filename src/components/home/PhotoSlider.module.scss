@@ -6,6 +6,14 @@
   width: 100%;
 }
 
+.withDots {
+  padding-bottom: v.$space-6;
+
+  @include m.respond-to("tablet") {
+    padding-bottom: v.$space-7;
+  }
+}
+
 .imageWrap {
   position: relative;
   width: 100%;

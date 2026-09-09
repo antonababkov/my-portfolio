@@ -11,7 +11,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const slides =
     project.photos.length > 0
       ? project.photos.map((photo, i) => (
-          <div key={photo.id} className={styles.slideItem}>
+          <div
+            key={photo.id}
+            className={project.photos.length > 1 ? `${styles.slideItem} ${styles.withDots}` : styles.slideItem}
+          >
             <div className={styles.imageWrap}>
               <Image
                 src={photo.url}

@@ -33,6 +33,22 @@
   overflow: hidden;
 }
 
+.withDots .imageWrap {
+  bottom: v.$space-6;
+
+  @include m.respond-to("tablet") {
+    bottom: v.$space-7;
+  }
+}
+
+.withDots .caption {
+  bottom: v.$space-6;
+
+  @include m.respond-to("tablet") {
+    bottom: v.$space-7;
+  }
+}
+
 .image {
   object-fit: cover;
 }
