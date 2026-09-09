@@ -2,6 +2,7 @@ export type Photo = {
   id: string;
   url: string;
   alt: string;
+  description: string | null;
   order: number;
 };
 
@@ -26,6 +27,7 @@ export type PhotoData = {
   id: string;
   url: string;
   alt: string;
+  description: string | null;
   order: number;
   profileId: string | null;
   projectId: string | null;

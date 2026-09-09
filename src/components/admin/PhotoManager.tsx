@@ -9,6 +9,7 @@ type Photo = {
   id: string;
   url: string;
   alt: string;
+  description: string | null;
   order: number;
 };
 
@@ -25,6 +26,7 @@ type PhotoManagerProps = {
 export default function PhotoManager({ photos, owner, onChange }: PhotoManagerProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
 
   const sorted = [...photos].sort((a, b) => a.order - b.order);
 
@@ -62,6 +64,30 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
       onChange(photos.filter((p) => p.id !== photo.id));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function updateDescription(photo: Photo, description: string) {
+    setSaving(photo.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/photos/${photo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Не удалось сохранить описание");
+        return;
+      }
+      onChange(
+        photos.map((p) => (p.id === photo.id ? { ...p, description: data.description } : p))
+      );
+    } catch {
+      setError("Ошибка сохранения описания");
+    } finally {
+      setSaving(null);
     }
   }
 
@@ -117,6 +143,34 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
                 <span className={styles.name} title={photo.alt}>
                   {photo.alt || "Без подписи"}
                 </span>
+
+                <form
+                  className={styles.descForm}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = e.currentTarget.elements.namedItem("description") as
+                      | HTMLInputElement
+                      | HTMLTextAreaElement;
+                    updateDescription(photo, input.value.trim());
+                  }}
+                >
+                  <textarea
+                    name="description"
+                    className={styles.descInput}
+                    placeholder="Описание фото"
+                    rows={2}
+                    maxLength={1000}
+                    defaultValue={photo.description ?? ""}
+                  />
+                  <button
+                    type="submit"
+                    className={styles.descSave}
+                    disabled={saving === photo.id}
+                  >
+                    {saving === photo.id ? "…" : "Сохранить"}
+                  </button>
+                </form>
+
                 <div className={styles.actions}>
                   <button
                     type="button"

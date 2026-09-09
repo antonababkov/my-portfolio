@@ -7,6 +7,7 @@ import { assertSameOrigin } from "@/lib/csrf";
 const AttachSchema = z.object({
   url: z.string().min(1),
   alt: z.string().optional(),
+  description: z.string().optional(),
   profileId: z.string().optional(),
   projectId: z.string().optional(),
 }).refine((v) => {
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { url, alt, profileId, projectId } = parsed.data;
+  const { url, alt, description, profileId, projectId } = parsed.data;
 
   const ownerFilter = projectId ? { projectId } : { profileId };
   const last = await db.photo.findFirst({
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     data: {
       url,
       alt: alt || "Фото",
+      description: description || null,
       order: (last?.order ?? -1) + 1,
       ...(profileId ? { profileId } : {}),
       ...(projectId ? { projectId } : {}),

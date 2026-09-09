@@ -63,18 +63,18 @@
 }
 
 .arrowLeft {
-  left: v.$space-2;
+  left: v.$space-1;
 
   @include m.respond-to("tablet") {
-    left: v.$space-3;
+    left: v.$space-2;
   }
 }
 
 .arrowRight {
-  right: v.$space-2;
+  right: v.$space-1;
 
   @include m.respond-to("tablet") {
-    right: v.$space-3;
+    right: v.$space-2;
   }
 }
 

@@ -4,11 +4,26 @@
 .slideItem {
   position: relative;
   width: 100%;
+}
+
+.imageWrap {
+  position: relative;
+  width: 100%;
   overflow: hidden;
+  border-radius: v.$radius-lg;
 }
 
 .image {
   object-fit: cover;
+}
+
+.caption {
+  margin: v.$space-2 0 0;
+  font-family: v.$font-sans;
+  font-size: v.$font-size-sm;
+  line-height: v.$line-height-relaxed;
+  color: var(--color-foreground-secondary);
+  text-align: center;
 }
 
 .placeholder {

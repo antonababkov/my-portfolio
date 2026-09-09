@@ -23,15 +23,20 @@ export default function PhotoSlider({
   }
 
   const slides = photos.map((photo, index) => (
-    <div className={styles.slideItem} key={photo.id} style={{ aspectRatio }}>
-      <Image
-        src={photo.url}
-        alt={photo.alt}
-        fill
-        priority={index === 0}
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className={styles.image}
-      />
+    <div className={styles.slideItem} key={photo.id}>
+      <div className={styles.imageWrap} style={{ aspectRatio }}>
+        <Image
+          src={photo.url}
+          alt={photo.alt}
+          fill
+          priority={index === 0}
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className={styles.image}
+        />
+      </div>
+      {photo.description && (
+        <p className={styles.caption}>{photo.description}</p>
+      )}
     </div>
   ));
 

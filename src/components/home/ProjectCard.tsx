@@ -12,14 +12,19 @@ export default function ProjectCard({ project }: ProjectCardProps) {
     project.photos.length > 0
       ? project.photos.map((photo, i) => (
           <div key={photo.id} className={styles.slideItem}>
-            <Image
-              src={photo.url}
-              alt={photo.alt}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              loading={i === 0 ? "eager" : "lazy"}
-              className={styles.image}
-            />
+            <div className={styles.imageWrap}>
+              <Image
+                src={photo.url}
+                alt={photo.alt}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                className={styles.image}
+              />
+            </div>
+            {photo.description && (
+              <p className={styles.caption}>{photo.description}</p>
+            )}
           </div>
         ))
       : null;
