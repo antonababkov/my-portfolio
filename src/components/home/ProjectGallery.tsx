@@ -4,6 +4,7 @@ import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchE
 import Image from "next/image";
 import Slider from "@/components/ui/Slider";
 import Lightbox from "@/components/ui/Lightbox";
+import { photoUrl } from "@/lib/photoUrl";
 import type { Photo } from "@/types";
 import styles from "./ProjectGallery.module.scss";
 
@@ -67,7 +68,7 @@ export default function ProjectGallery({ photos }: ProjectGalleryProps) {
     >
       <div className={styles.imageWrap}>
         <Image
-          src={photo.url}
+          src={photoUrl(photo.url)}
           alt={photo.alt}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
@@ -91,7 +92,7 @@ export default function ProjectGallery({ photos }: ProjectGalleryProps) {
 
       <Lightbox
         open={openIndex !== null}
-        src={activePhoto?.url ?? ""}
+        src={activePhoto ? photoUrl(activePhoto.url) : ""}
         alt={activePhoto?.alt ?? ""}
         description={activePhoto?.description}
         hasPrev={navigable}

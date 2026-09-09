@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Profile, Project } from "@/types";
 import LogoutButton from "./LogoutButton";
@@ -47,7 +48,12 @@ export default function AdminDashboard() {
     <main id="main" className={styles.main}>
       <header className={styles.header}>
         <h1 className={styles.title}>Админ-панель</h1>
-        <LogoutButton />
+        <div className={styles.actions}>
+          <Link href="/" className={styles.homeLink}>
+            На главную
+          </Link>
+          <LogoutButton />
+        </div>
       </header>
 
       <nav className={styles.tabs}>
