@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
   poweredByHeader: false,
+  images: {
+    unoptimized: true,
+  },
   async headers() {
     return [
       {

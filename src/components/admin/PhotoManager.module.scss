@@ -69,6 +69,53 @@
   white-space: nowrap;
 }
 
+.descForm {
+  display: flex;
+  gap: v.$space-1;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.descInput {
+  flex: 1;
+  min-width: 0;
+  padding: v.$space-1 v.$space-2;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-sm;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: inherit;
+  font-size: v.$font-size-sm;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 40px;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.descSave {
+  flex-shrink: 0;
+  padding: v.$space-1 v.$space-2;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-sm;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: v.$font-size-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-background-secondary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
 .actions {
   display: flex;
   gap: v.$space-1;

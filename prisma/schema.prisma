@@ -19,14 +19,15 @@ model Profile {
 }
 
 model Photo {
-  id        String   @id @default(cuid())
-  url       String
-  alt       String
-  profile   Profile? @relation(fields: [profileId], references: [id])
-  profileId String?
-  project   Project? @relation(fields: [projectId], references: [id])
-  projectId String?
-  order     Int      @default(0)
+  id          String   @id @default(cuid())
+  url         String
+  alt         String
+  description String?
+  profile     Profile? @relation(fields: [profileId], references: [id])
+  profileId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  projectId   String?
+  order       Int      @default(0)
 
   @@index([profileId])
   @@index([projectId])

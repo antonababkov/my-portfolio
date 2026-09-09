@@ -9,7 +9,8 @@ import { assertSameOrigin } from "@/lib/csrf";
 type Params = { params: Promise<{ id: string }> };
 
 const PatchSchema = z.object({
-  alt: z.string().min(0).max(200),
+  alt: z.string().min(0).max(200).optional(),
+  description: z.string().min(0).max(1000).nullable().optional(),
 });
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -35,9 +36,24 @@ export async function PATCH(request: Request, { params }: Params) {
     );
   }
 
+  const data: { alt?: string; description?: string | null } = {};
+  if (parsed.data.alt !== undefined) {
+    data.alt = parsed.data.alt || "Фото";
+  }
+  if (parsed.data.description !== undefined) {
+    data.description = parsed.data.description;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json(
+      { error: "No fields to update provided" },
+      { status: 400 }
+    );
+  }
+
   const photo = await db.photo.update({
     where: { id },
-    data: { alt: parsed.data.alt || "Фото" },
+    data,
   });
 
   return NextResponse.json(photo);
