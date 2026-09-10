@@ -12,6 +12,18 @@
   }
 }
 
+.reversed {
+  @include m.respond-to("tablet") {
+    .media {
+      order: 2;
+    }
+
+    .body {
+      order: 1;
+    }
+  }
+}
+
 .media {
   position: relative;
   width: 100%;
