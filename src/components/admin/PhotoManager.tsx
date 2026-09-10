@@ -151,32 +151,34 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
                   {photo.alt || "Без подписи"}
                 </span>
 
-                <form
-                  className={styles.descForm}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const input = e.currentTarget.elements.namedItem("description") as
-                      | HTMLInputElement
-                      | HTMLTextAreaElement;
-                    updateDescription(photo, input.value.trim());
-                  }}
-                >
-                  <textarea
-                    name="description"
-                    className={styles.descInput}
-                    placeholder="Описание фото"
-                    rows={2}
-                    maxLength={1000}
-                    defaultValue={photo.description ?? ""}
-                  />
-                  <button
-                    type="submit"
-                    className={styles.descSave}
-                    disabled={saving === photo.id}
+                {"projectId" in owner && (
+                  <form
+                    className={styles.descForm}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const input = e.currentTarget.elements.namedItem("description") as
+                        | HTMLInputElement
+                        | HTMLTextAreaElement;
+                      updateDescription(photo, input.value.trim());
+                    }}
                   >
-                    {saving === photo.id ? "…" : "Сохранить"}
-                  </button>
-                </form>
+                    <textarea
+                      name="description"
+                      className={styles.descInput}
+                      placeholder="Описание фото"
+                      rows={2}
+                      maxLength={1000}
+                      defaultValue={photo.description ?? ""}
+                    />
+                    <button
+                      type="submit"
+                      className={styles.descSave}
+                      disabled={saving === photo.id}
+                    >
+                      {saving === photo.id ? "…" : "Сохранить"}
+                    </button>
+                  </form>
+                )}
 
                 <div className={styles.actions}>
                   <button

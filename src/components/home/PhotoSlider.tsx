@@ -38,9 +38,6 @@ export default function PhotoSlider({
           className={styles.image}
         />
       </div>
-      {photo.description && (
-        <p className={styles.caption}>{photo.description}</p>
-      )}
     </div>
   ));
 

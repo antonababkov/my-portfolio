@@ -25,18 +25,6 @@
   object-fit: cover;
 }
 
-.caption {
-  margin: v.$space-2 0 0;
-  padding: v.$space-2 v.$space-3;
-  font-family: v.$font-sans;
-  font-size: v.$font-size-sm;
-  line-height: v.$line-height-relaxed;
-  color: var(--color-foreground-secondary);
-  text-align: center;
-  border-radius: v.$radius-md;
-  background: var(--color-background-secondary);
-}
-
 .placeholder {
   width: 100%;
   aspect-ratio: 4 / 3;
