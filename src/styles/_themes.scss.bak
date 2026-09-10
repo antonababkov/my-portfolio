@@ -8,8 +8,8 @@
 @mixin light-theme {
   color-scheme: light;
 
-  --color-background: #f8f8f8;
-  --color-background-secondary: #f0f0f0;
+  --color-background: #ffffff;
+  --color-background-secondary: #f5f5f5;
   --color-background-elevated: #ffffff;
   --color-foreground: #171717;
   --color-foreground-secondary: #4b4b4b;
@@ -33,26 +33,26 @@
 @mixin dark-theme {
   color-scheme: dark;
 
-  --color-background: #1e1e2e;
-  --color-background-secondary: #262638;
-  --color-background-elevated: #2e2e42;
+  --color-background: #0a0a0a;
+  --color-background-secondary: #161616;
+  --color-background-elevated: #1e1e1e;
   --color-foreground: #ededed;
   --color-foreground-secondary: #c4c4c4;
   --color-foreground-muted: #9a9a9a;
-  --color-border: #3a3a50;
+  --color-border: #2e2e2e;
   --color-accent: #818cf8;
   --color-accent-hover: #a5b4fc;
-  --color-accent-contrast: #1e1e2e;
+  --color-accent-contrast: #0a0a0a;
   --color-success: #4ade80;
   --color-warning: #fbbf24;
   --color-danger: #f87171;
   --color-overlay: rgba(0, 0, 0, 0.7);
 
-  --shadow-color: rgba(0, 0, 0, 0.35);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --color-scrollbar: #4a4a5e;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --color-scrollbar: #3a3a3a;
 }
 
 :root {
