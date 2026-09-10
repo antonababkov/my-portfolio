@@ -16,6 +16,7 @@ async function main() {
       position: "Frontend-разработчик",
       description:
         "Разрабатываю современные веб-интерфейсы на Next.js и React. Люблю чистый код, доступный UX и производительность.",
+      sliderAutoPlay: false,
     },
   });
 

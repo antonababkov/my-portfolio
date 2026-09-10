@@ -15,6 +15,7 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
   const [fullName, setFullName] = useState(initial.fullName);
   const [position, setPosition] = useState(initial.position);
   const [description, setDescription] = useState(initial.description);
+  const [sliderAutoPlay, setSliderAutoPlay] = useState(initial.sliderAutoPlay);
   const [photos, setPhotos] = useState<Photo[]>(initial.photos);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "ok" | "error">("idle");
@@ -22,7 +23,8 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
   const changed =
     fullName !== profile.fullName ||
     position !== profile.position ||
-    description !== profile.description;
+    description !== profile.description ||
+    sliderAutoPlay !== profile.sliderAutoPlay;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,14 +35,26 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, position, description }),
+        body: JSON.stringify({
+          fullName,
+          position,
+          description,
+          sliderAutoPlay,
+        }),
       });
       if (!res.ok) {
         setStatus("error");
         return;
       }
       setStatus("ok");
-      onSaved?.({ ...profile, fullName, position, description, photos });
+      onSaved?.({
+        ...profile,
+        fullName,
+        position,
+        description,
+        sliderAutoPlay,
+        photos,
+      });
     } catch {
       setStatus("error");
     } finally {
@@ -82,6 +96,18 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
             rows={5}
             required
           />
+        </label>
+
+        <label className={styles.checkboxWrapper}>
+          <input
+            type="checkbox"
+            className={styles.checkboxInput}
+            checked={sliderAutoPlay}
+            onChange={(e) => setSliderAutoPlay(e.target.checked)}
+          />
+          <span className={styles.label}>
+            Автопереключение фотографий
+          </span>
         </label>
 
         {status === "ok" && (

@@ -63,6 +63,20 @@
   min-height: 100px;
 }
 
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+  cursor: pointer;
+}
+
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
 .save {
   align-self: flex-start;
   padding: v.$space-2 v.$space-5;

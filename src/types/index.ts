@@ -11,6 +11,7 @@ export type Profile = {
   fullName: string;
   position: string;
   description: string;
+  sliderAutoPlay: boolean;
   photos: Photo[];
 };
 

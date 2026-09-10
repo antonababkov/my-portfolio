@@ -30,6 +30,7 @@ export default function Slider({
   ariaLabel = "Слайдер",
 }: SliderProps) {
   const [index, setIndex] = useState(0);
+  const indexRef = useRef(0);
   const touchX = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -37,13 +38,19 @@ export default function Slider({
 
   const goTo = useCallback(
     (next: number) => {
-      setIndex(((next % count) + count) % count);
+      const nextIndex = ((next % count) + count) % count;
+      indexRef.current = nextIndex;
+      setIndex(nextIndex);
     },
     [count]
   );
 
-  const next = useCallback(() => goTo(index + 1), [goTo, index]);
-  const prev = useCallback(() => goTo(index - 1), [goTo, index]);
+  const next = useCallback(() => goTo(indexRef.current + 1), [goTo]);
+  const prev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
+
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
 
   useEffect(() => {
     if (!autoPlay || count <= 1) return;
