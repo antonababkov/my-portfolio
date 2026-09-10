@@ -119,6 +119,37 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 
 ---
 
+## Docker-команды (шпаргалка)
+
+Команды отсортированы по частоте использования — от самых частых к редким.
+
+> Для краткости переменная `COMPOSE` = `docker compose --env-file .env -f docker/docker-compose.yml`.
+> Linux/macOS: `export COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"` — далее `$COMPOSE …`.
+> Windows PowerShell: используйте полную команду из таблицы (PowerShell не разбивает строку из переменной на аргументы).
+
+| Команда                                                                                        | Назначение                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `docker compose --env-file .env -f docker/docker-compose.yml up -d`                            | Поднять весь стек (db → migrate → app). Повторный запуск пересоздаёт только изменённые контейнеры |
+| `docker compose --env-file .env -f docker/docker-compose.yml up -d --build`                    | Пересобрать образы и поднять стек — основной цикл после изменений кода                            |
+| `docker compose -f docker/docker-compose.yml logs -f app`                                      | Следить за логами приложения (живой поток)                                                        |
+| `docker compose -f docker/docker-compose.yml logs migrate`                                     | Проверить, что миграции и сид применились (`Seed completed: …`)                                   |
+| `docker compose -f docker/docker-compose.yml ps`                                               | Статус контейнеров (`Up`, `Exit`, `Healthy`)                                                      |
+| `docker compose -f docker/docker-compose.yml restart app`                                      | Перезапуск одного сервиса без остановки остальных                                                 |
+| `docker compose -f docker/docker-compose.yml stop`                                             | Остановить контейнеры (сохраняет их, данные и volumes нетронуты)                                  |
+| `docker compose -f docker/docker-compose.yml start`                                            | Запустить остановленный стек сразу (`stop` → `start` быстрее, чем `up`)                           |
+| `docker compose -f docker/docker-compose.yml down`                                             | Полностью остановить и удалить контейнеры + сеть. **Volumes (БД и uploads) сохраняются**          |
+| `docker compose --env-file .env -f docker/docker-compose.yml build --no-cache app`             | Принудительная пересборка без кэша (если Docker отдаёт устаревший слой после правок)              |
+| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate`                 | Запустить сервис миграций вручную: `prisma migrate deploy` + seed                                 |
+| `docker exec -it docker-app-1 sh`                                                              | Открыть shell внутри контейнера приложения (отладка, инспекция файлов)                            |
+| `docker compose -f docker/docker-compose.yml exec db psql -U %POSTGRES_USER% -d %POSTGRES_DB%` | Интерактивный `psql` в базе данных (Windows: `%%VAR%%`; Linux/macOS: `$VAR`)                      |
+| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate sh`              | Интерактивный shell в окружении мигратора (с Prisma CLI/openssl)                                  |
+| `docker compose -f docker/docker-compose.yml config`                                           | Показать итоговый конфиг после подстановки переменных окружения                                   |
+| `docker compose --env-file .env -f docker/docker-compose.yml down -v`                          | Полный сброс: удаляет контейнеры, сеть **и volumes** (БД и загруженные файлы). Осторожно!         |
+| `docker cp docker-app-1:/app/public/uploads/photo.jpg ./`                                      | Скопировать файл из контейнера на хост (и наоборот)                                               |
+| `docker system prune -af`                                                                      | Удалить все неиспользуемые образы, контейнеры и кэш сборки (освобождение места)                   |
+
+---
+
 ## Запуск (локальная разработка)
 
 ### 1. Установить зависимости
