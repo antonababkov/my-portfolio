@@ -4,11 +4,16 @@ import styles from "./ProjectCard.module.scss";
 
 type ProjectCardProps = {
   project: Project;
+  reversed?: boolean;
 };
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, reversed = false }: ProjectCardProps) {
+  const classes = reversed
+    ? `${styles.card} ${styles.reversed}`
+    : styles.card;
+
   return (
-    <section className={styles.card} id={`project-${project.id}`} aria-labelledby={`project-title-${project.id}`}>
+    <section className={classes} id={`project-${project.id}`} aria-labelledby={`project-title-${project.id}`}>
       <div className={styles.media}>
         {project.photos.length > 0 ? (
           <ProjectGallery photos={project.photos} />

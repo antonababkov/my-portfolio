@@ -25,14 +25,25 @@ export async function PUT(request: Request) {
     return csrf;
   }
 
-  const body: { fullName?: string; position?: string; description?: string } =
-    await request.json();
+  const body: {
+    fullName?: string;
+    position?: string;
+    description?: string;
+    sliderAutoPlay?: boolean;
+  } = await request.json();
 
-  const { fullName, position, description } = body;
+  const { fullName, position, description, sliderAutoPlay } = body;
 
   if (!fullName || !position || !description) {
     return NextResponse.json(
       { error: "Fields fullName, position, description are required" },
+      { status: 400 }
+    );
+  }
+
+  if (sliderAutoPlay !== undefined && typeof sliderAutoPlay !== "boolean") {
+    return NextResponse.json(
+      { error: "Field sliderAutoPlay must be a boolean" },
       { status: 400 }
     );
   }
@@ -44,12 +55,18 @@ export async function PUT(request: Request) {
         fullName,
         position,
         description,
+        sliderAutoPlay: sliderAutoPlay ?? false,
       },
     });
   } else {
     profile = await db.profile.update({
       where: { id: profile.id },
-      data: { fullName, position, description },
+      data: {
+        fullName,
+        position,
+        description,
+        ...(sliderAutoPlay !== undefined ? { sliderAutoPlay } : {}),
+      },
     });
   }
 

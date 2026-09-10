@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import styles from "./ImageUploader.module.scss";
 
 type ImageUploaderProps = {
-  onUploaded: (url: string, name: string) => void;
+  onUploaded: (url: string, name: string) => void | Promise<void>;
   label?: string;
   disabled?: boolean;
   variant?: "profile" | "project";
@@ -49,7 +49,7 @@ export default function ImageUploader({
           setError(data.error || "Не удалось загрузить файл");
           continue;
         }
-        onUploaded(data.url, file.name);
+        await onUploaded(data.url, file.name);
       }
     } catch {
       setError("Ошибка соединения с сервером");

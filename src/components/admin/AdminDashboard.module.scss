@@ -2,6 +2,7 @@
 @use "../../styles/mixins" as m;
 
 .main {
+  width: 100%;
   max-width: 960px;
   margin: 0 auto;
   padding: v.$space-6 v.$space-4;
@@ -12,6 +13,14 @@
   @include m.respond-to("tablet") {
     padding: v.$space-7 v.$space-6;
     gap: v.$space-6;
+  }
+
+  @include m.respond-to("laptop") {
+    max-width: 1200px;
+  }
+
+  @include m.respond-to("desktop") {
+    max-width: 1360px;
   }
 }
 

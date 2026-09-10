@@ -18,9 +18,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
       </header>
 
       <div className={styles.list}>
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <div key={project.id} className={styles.item}>
-            <ProjectCard project={project} />
+            <ProjectCard project={project} reversed={index % 2 === 1} />
           </div>
         ))}
       </div>

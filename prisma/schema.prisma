@@ -11,11 +11,12 @@ datasource db {
 }
 
 model Profile {
-  id          String  @id @default(cuid())
-  fullName    String
-  position    String
-  description String
-  photos      Photo[]
+  id             String  @id @default(cuid())
+  fullName       String
+  position       String
+  description    String
+  sliderAutoPlay Boolean @default(false)
+  photos         Photo[]
 }
 
 model Photo {

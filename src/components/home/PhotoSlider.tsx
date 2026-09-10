@@ -12,7 +12,7 @@ type PhotoSliderProps = {
 
 export default function PhotoSlider({
   photos,
-  autoPlay = true,
+  autoPlay = false,
   aspectRatio = "4 / 5",
 }: PhotoSliderProps) {
   if (photos.length === 0) {

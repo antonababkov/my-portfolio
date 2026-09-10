@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import Image from "next/image";
 import ImageUploader from "./ImageUploader";
 import { photoUrl } from "@/lib/photoUrl";
@@ -21,7 +21,7 @@ type Owner =
 type PhotoManagerProps = {
   photos: Photo[];
   owner: Owner;
-  onChange: (photos: Photo[]) => void;
+  onChange: Dispatch<SetStateAction<Photo[]>>;
 };
 
 export default function PhotoManager({ photos, owner, onChange }: PhotoManagerProps) {
@@ -45,7 +45,7 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
         setError(data.error || "Не удалось добавить фото");
         return;
       }
-      onChange([...photos, data]);
+      onChange((prev) => [...prev, data]);
     } catch {
       setError("Ошибка соединения с сервером");
     } finally {
@@ -62,7 +62,7 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
         setError("Не удалось удалить фото");
         return;
       }
-      onChange(photos.filter((p) => p.id !== photo.id));
+      onChange((prev) => prev.filter((p) => p.id !== photo.id));
     } finally {
       setBusy(false);
     }
@@ -83,7 +83,8 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
         return;
       }
       onChange(
-        photos.map((p) => (p.id === photo.id ? { ...p, description: data.description } : p))
+        (prev) =>
+          prev.map((p) => (p.id === photo.id ? { ...p, description: data.description } : p))
       );
     } catch {
       setError("Ошибка сохранения описания");
@@ -101,9 +102,10 @@ export default function PhotoManager({ photos, owner, onChange }: PhotoManagerPr
     list.splice(target, 0, item);
 
     const items = list.map((p, i) => ({ id: p.id, order: i }));
-    onChange(
-      list.map((p, i) => ({ ...p, order: i }))
-    );
+    onChange((prev) => {
+      const byId = new Map(prev.map((p) => [p.id, p]));
+      return list.map((p, i) => ({ ...(byId.get(p.id) ?? p), order: i }));
+    });
     setError(null);
 
     try {
