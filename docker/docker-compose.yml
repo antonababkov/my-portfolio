@@ -33,8 +33,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      AUTH_ADMIN_LOGIN: ${AUTH_ADMIN_LOGIN:-admin}
-      AUTH_ADMIN_PASSWORD: ${AUTH_ADMIN_PASSWORD:-admin123}
+      AUTH_ADMIN_LOGIN: ${AUTH_ADMIN_LOGIN:?AUTH_ADMIN_LOGIN is required in .env}
+      AUTH_ADMIN_PASSWORD: ${AUTH_ADMIN_PASSWORD:?AUTH_ADMIN_PASSWORD is required in .env}
     command: >
       sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
     networks:
@@ -47,11 +47,18 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     depends_on:
       migrate:
         condition: service_completed_successfully
     environment:
       NODE_ENV: production
+      HOSTNAME: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       AUTH_SECRET: ${AUTH_SECRET}
       SITE_URL: ${SITE_URL:-http://localhost:3000}
