@@ -8,7 +8,7 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 # ---------- 2. Сборка ----------
 FROM node:22-slim AS builder

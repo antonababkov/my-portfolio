@@ -34,14 +34,14 @@
 my-portfolio/
 ├─ docker/
 │  ├─ Dockerfile           # multi-stage: deps → builder → migrator → runner (standalone)
-│  ├─ docker-compose.yml   # db / migrate / app
+│  ├─ docker-compose.yml   # db / migrate / app (+ healthcheck)
 │  └─ Caddyfile            # reverse-proxy + автоматический HTTPS
 ├─ prisma/
 │  ├─ schema.prisma        # модели Profile, Photo, Project, Admin
 │  ├─ migrations/          # SQL-миграции
 │  └─ seed.ts              # демо-данные + создание админа
 ├─ src/
-│  ├─ app/                 # App Router (страницы, Route Handlers: api/auth, api/profile, api/projects, api/photos, api/upload)
+│  ├─ app/                 # App Router (страницы, Route Handlers: api/auth, api/profile, api/projects, api/photos, api/upload, api/health)
 │  ├─ components/          # home/, admin/, ui/, footer/
 │  ├─ lib/                 # db.ts, auth.ts, api.ts, constants.ts, theme.ts, csrf.ts, rate-limit.ts
 │  └─ generated/prisma/    # сгенерированный Prisma-клиент (не редактировать)
@@ -86,6 +86,10 @@ SITE_URL=http://localhost:3000
 ```
 
 > **Важно:** `AUTH_ADMIN_PASSWORD` и `AUTH_SECRET` задаются один раз при первом запуске. Сид создаёт админа только если его ещё нет (upsert `create`). Смена пароля в `.env` после первого seed **не** обновит существующего админа — для смены нужно обновить пароль через БД или пересоздать контейнер с чистыми volumes.
+>
+> Сид **откажется** работать, если `AUTH_ADMIN_PASSWORD` пуст, короче 8 символов, равен `admin123` или `replace-with-strong-password` — защита от тривиального пароля.
+>
+> **PostgreSQL в Docker:** `POSTGRES_PASSWORD` применяется только при **первом** создании volume `db-data`. Если поменять пароль в `.env` позже, существующая БД продолжит использовать старый пароль, и `migrate` упадёт с `P1000`. Синхронизируйте пароль SQL-командой `ALTER USER … WITH PASSWORD …` или пересоздайте volumes (см. «Траблшутинг»).
 
 ---
 
@@ -101,6 +105,7 @@ docker compose --env-file .env -f docker/docker-compose.yml up -d --build
 
 # 3. Проверка
 docker compose -f docker/docker-compose.yml logs migrate   # "Seed completed: ..."
+docker compose -f docker/docker-compose.yml ps             # db и app должны быть (healthy)
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 # Windows PowerShell: (Invoke-WebRequest -Uri http://localhost:3000).StatusCode
 ```
@@ -110,8 +115,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 ### Что делает команда развёртывания
 
 - **db** — PostgreSQL 16, volume `db-data`, healthcheck `pg_isready`.
-- **migrate** — применяет миграции (`prisma migrate deploy`) и запускает seed (создаёт профиль, демо-проекты и админа). Работает один раз, `restart: "no"`.
-- **app** — standalone-сборка Next.js, volume `uploads`, порт `127.0.0.1:3000`.
+- **migrate** — применяет миграции (`prisma migrate deploy`) и запускает seed (создаёт профиль, демо-проекты и админа). Работает один раз, `restart: "no"`. Требует `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` из `.env` (без дефолтов — иначе compose не поднимется).
+- **app** — standalone-сборка Next.js, volume `uploads`, порт `127.0.0.1:3000`, env `HOSTNAME=0.0.0.0` (иначе Next слушает IP контейнера и healthcheck по `127.0.0.1` не сработает), healthcheck через `GET /api/health` (30s interval, старт-период 40s).
 
 ### HTTPS (Caddy)
 
@@ -222,10 +227,10 @@ npx tsc --noEmit  # проверка типов
 
 Multi-stage сборка:
 
-1. `deps` — установка зависимостей `npm install`.
+1. `deps` — установка зависимостей `npm ci` (ровно по `package-lock.json`).
 2. `builder` — `prisma generate` + `npm run build` (Next standalone).
 3. `migrator` — лёгкий слой с Prisma CLI + `openssl`; применяет миграции и сид (запускается от root для прав на engines).
-4. `runner` — минимальный runtime `node server.js` от пользователя `nextjs`, volume `uploads`.
+4. `runner` — минимальный runtime `node server.js` от пользователя `nextjs`, volume `uploads`, healthcheck `GET /api/health`.
 
 Нативные модули (`sharp`, `pg`) требуют `node:22-slim` (не alpine).
 
@@ -249,6 +254,7 @@ Multi-stage сборка:
 | PATCH  | `/api/photos/[id]`   | Обновление фото (админ)              |
 | DELETE | `/api/photos/[id]`   | Удаление фото (админ)                |
 | POST   | `/api/upload`        | Загрузка файла в `/uploads` (админ)  |
+| GET    | `/api/health`        | Health-проба (публичный, без БД)     |
 
 ---
 
@@ -269,6 +275,14 @@ Multi-stage сборка:
 
 - **`localhost:3000` отвечает неправильное приложение** — порт может «перекрываться» запущенным отдельно `next dev`. Проверьте, какой процесс слушает 3000: `netstat -ano | findstr :3000` (Windows) или `lsof -i :3000` (Linux/macOS). Остановите лишний dev-сервер, оставив только Docker-проки.
 - **Логин возвращает 401 сразу после первого запуска** — проверьте, что `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` дошли до `migrate`-контейнера, и что админ действительно создан при seed (`docker compose logs migrate`).
+- **`migrate` падает с ошибкой про `AUTH_ADMIN_PASSWORD`** — сид с 2026-09 валидирует пароль (≥8 символов, не плейсхолдер, не `admin123`). Задайте нормальный пароль в `.env` и перезапустите: `docker compose --env-file .env -f docker/docker-compose.yml up -d --force-recreate migrate`.
+- **`docker compose up` не стартует с сообщением про `AUTH_ADMIN_LOGIN/PASSWORD required`** — переменные админа больше не имеют дефолтов; добавьте их в `.env` (см. `.env.example`).
+- **`migrate` падает с `P1000: Authentication failed for <user>`** — пароль в volume `db-data` не совпадает с `POSTGRES_PASSWORD` из `.env` (пароль задаётся только при первом создании volume). Два варианта:
+  - *Без потери данных:* синхронизировать пароль прямо в БД:
+    `docker compose --env-file .env -f docker/docker-compose.yml exec db psql -U $POSTGRES_USER -d $POSTGRES_DB -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';"`
+    (Windows PowerShell: `%POSTGRES_USER%`/`%POSTGRES_PASSWORD%`). Затем перезапустить цепочку: `docker compose --env-file .env -f docker/docker-compose.yml up -d --force-recreate migrate app`.
+  - *Полный сброс (данные БД и uploads удаляются):* `docker compose --env-file .env -f docker/docker-compose.yml down -v`, затем `up -d --build`.
+- **`docker compose ps` показывает `(unhealthy)` для `app`** — проба `GET /api/health` не отвечает. Смотрите `docker compose logs app`: если приложение долго стартует (первые миграции/seed), это нормально в течение `start_period: 40s`; при повторе — проверьте логи и порт 3000. Если приложение отвечает снаружи, но healthcheck падает — у standalone-Next сервер слушает не `127.0.0.1`: Docker подставляет env `HOSTNAME` (равный IP/ID контейнера), и `server.js` берёт его как адрес бинда. В compose-файле это уже учтено (`HOSTNAME: "0.0.0.0"` у сервиса `app`); при запуске вне compose задайте `HOSTNAME` явно.
 - **Смена пароля админа** не применяется после повторного запуска — сид не перезаписывает существующего админа. Обновите пароль в БД или пересоздайте стек с чистыми volumes: `docker compose down -v`.
 - **Не применяются изменения при `up --build`** — убедитесь, что Docker-кэш не выдаёт старый слой: используйте `docker compose build --no-cache` при сомнениях.
 - **Загруженные изображения не видны** — убедитесь, что volume `uploads` смонтирован и приложение отдаёт `/uploads` с заголовком `Cache-Control`.

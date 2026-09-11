@@ -24,8 +24,23 @@ async function main() {
     where: { id: { in: ["project-demo-1", "project-demo-2"] } },
   });
 
-  const adminLogin = process.env.AUTH_ADMIN_LOGIN || "admin";
-  const adminPassword = process.env.AUTH_ADMIN_PASSWORD || "admin123";
+  const adminLogin = process.env.AUTH_ADMIN_LOGIN?.trim() || "";
+  const adminPassword = process.env.AUTH_ADMIN_PASSWORD || "";
+
+  // Fail-fast: не создаём админа с пустым/тривиальным паролем.
+  if (!adminLogin) {
+    throw new Error("AUTH_ADMIN_LOGIN не задан. Заполните .env (см. .env.example).");
+  }
+  if (
+    !adminPassword ||
+    adminPassword.length < 8 ||
+    adminPassword === "admin123" ||
+    adminPassword === "replace-with-strong-password"
+  ) {
+    throw new Error(
+      "AUTH_ADMIN_PASSWORD не задан или слишком слабый (минимум 8 символов, не плейсхолдер). Заполните .env (см. .env.example)."
+    );
+  }
 
   await prisma.admin.upsert({
     where: { login: adminLogin },

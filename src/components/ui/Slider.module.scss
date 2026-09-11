@@ -9,6 +9,7 @@
 .viewport {
   overflow: hidden;
   border-radius: v.$radius-lg;
+  box-shadow: var(--shadow-lg);
 }
 
 .track {
