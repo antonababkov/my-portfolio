@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import { getProfile } from "@/lib/api";
 import { SITE_NAME } from "@/lib/constants";
 
-export const alt = "Иван Иванов — Frontend-разработчик";
 export const size = {
   width: 1200,
   height: 630,
@@ -11,10 +10,33 @@ export const contentType = "image/png";
 
 export const dynamic = "force-dynamic";
 
+export async function generateImageMetadata() {
+  let alt = `${SITE_NAME} — портфолио`;
+  try {
+    const profile = await getProfile();
+    if (profile) {
+      alt = `${profile.fullName}${profile.position ? ` — ${profile.position}` : ""}`;
+    }
+  } catch (error) {
+    console.error("Failed to load profile for OG image alt:", error);
+  }
+
+  return [{ id: "default", size, contentType, alt }];
+}
+
 export default async function Image() {
-  const profile = await getProfile();
-  const name = profile?.fullName || SITE_NAME;
-  const position = profile?.position || "";
+  let name = SITE_NAME;
+  let position = "";
+
+  try {
+    const profile = await getProfile();
+    if (profile) {
+      name = profile.fullName || SITE_NAME;
+      position = profile.position || "";
+    }
+  } catch (error) {
+    console.error("Failed to load profile for OG image:", error);
+  }
 
   return new ImageResponse(
     (

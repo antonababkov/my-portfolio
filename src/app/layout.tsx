@@ -11,12 +11,12 @@ import { SkipLink } from "@/components/ui/SkipLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,8 +41,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     applicationName: title,
+    manifest: "/site.webmanifest",
     alternates: {
       canonical: "/",
+      languages: { ru: "/", "x-default": "/" },
+    },
+    twitter: {
+      card: "summary_large_image",
     },
     openGraph: {
       type: "website",

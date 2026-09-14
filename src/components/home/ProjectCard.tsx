@@ -34,7 +34,7 @@ export default function ProjectCard({ project, reversed = false }: ProjectCardPr
             target="_blank"
             rel="noopener noreferrer"
           >
-            Открыть проект
+            Открыть проект: {project.title}
           </a>
         )}
       </div>

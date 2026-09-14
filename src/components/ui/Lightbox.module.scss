@@ -23,10 +23,18 @@
   @include a.animate(scale-in, v.$transition-base);
 }
 
-.image {
-  display: block;
+.imageWrap {
+  position: relative;
+  width: min(92vw, calc(100vw - v.$space-4 * 2));
   max-width: 92vw;
-  max-height: 82vh;
+  height: 82vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: v.$radius-lg;
+}
+
+.image {
   object-fit: contain;
   border-radius: v.$radius-lg;
   box-shadow: var(--shadow-lg);
