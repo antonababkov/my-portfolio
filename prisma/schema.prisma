@@ -16,6 +16,10 @@ model Profile {
   position       String
   description    String
   sliderAutoPlay Boolean @default(false)
+  siteTitle       String  @default("Моё портфолио")
+  siteDescription String  @default("Личный сайт-портфолио")
+  email           String  @default("hello@example.com")
+  phone           String  @default("+7 (900) 000-00-00")
   photos         Photo[]
 }
 

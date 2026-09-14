@@ -3,16 +3,20 @@
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import {
-  CONTACTS,
   SOCIALS,
   PRIVACY_POLICY_TEXT,
   PERSONAL_DATA_POLICY_TEXT,
 } from "@/lib/constants";
 import styles from "./Footer.module.scss";
 
+type FooterProps = {
+  email: string;
+  phone: string;
+};
+
 type PolicyKey = "privacy" | "personalData" | null;
 
-export default function Footer() {
+export default function Footer({ email, phone }: FooterProps) {
   const [openPolicy, setOpenPolicy] = useState<PolicyKey>(null);
 
   const policies: Record<Exclude<PolicyKey, null>, { title: string; text: string }> = {
@@ -32,11 +36,11 @@ export default function Footer() {
           <p className={styles.copyright}>
             {new Date().getFullYear()} © Все права защищены
           </p>
-          <a className={styles.contactLink} href={`mailto:${CONTACTS.email}`}>
-            {CONTACTS.email}
+          <a className={styles.contactLink} href={`mailto:${email}`}>
+            {email}
           </a>
-          <a className={styles.contactLink} href={`tel:${CONTACTS.phone.replace(/[^+\d]/g, "")}`}>
-            {CONTACTS.phone}
+          <a className={styles.contactLink} href={`tel:${phone.replace(/[^+\d]/g, "")}`}>
+            {phone}
           </a>
         </div>
 

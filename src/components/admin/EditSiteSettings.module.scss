@@ -1,0 +1,91 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-5;
+}
+
+.heading {
+  margin: 0;
+  font-size: v.$font-size-xl;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-2xl;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-4;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-1;
+}
+
+.label {
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
+}
+
+.hint {
+  font-size: v.$font-size-xs;
+  color: var(--color-foreground-muted);
+  line-height: v.$line-height-normal;
+}
+
+.input,
+.textarea {
+  padding: v.$space-2 v.$space-3;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-md;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  font-size: v.$font-size-base;
+  font-family: inherit;
+
+  &:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.save {
+  align-self: flex-start;
+  padding: v.$space-2 v.$space-5;
+  border: none;
+  border-radius: v.$radius-md;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-semibold;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: v.$opacity-disabled;
+    cursor: not-allowed;
+  }
+}
+
+.ok {
+  margin: 0;
+  color: var(--color-success);
+  font-size: v.$font-size-sm;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: v.$font-size-sm;
+}

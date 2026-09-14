@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import styles from "./Lightbox.module.scss";
 
@@ -97,7 +98,9 @@ export default function Lightbox({
           </button>
         )}
 
-        <img className={styles.image} src={src} alt={alt} />
+        <div className={styles.imageWrap}>
+          <Image className={styles.image} src={src} alt={alt} fill sizes="92vw" priority />
+        </div>
 
         {hasNext && (
           <button

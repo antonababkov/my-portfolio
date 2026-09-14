@@ -2,44 +2,65 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
+import { SITE_NAME } from "@/lib/constants";
+import { getProfile } from "@/lib/api";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import Footer from "@/components/footer/Footer";
+import SiteFooter from "@/components/footer/SiteFooter";
 import "./globals.scss";
 import { SkipLink } from "@/components/ui/SkipLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
-  title: {
-    default: SITE_NAME,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    locale: "ru_RU",
-    url: "/",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let title = SITE_NAME;
+  let description = SITE_NAME;
+
+  try {
+    const profile = await getProfile();
+    if (profile) {
+      title = profile.siteTitle || SITE_NAME;
+      description = profile.siteDescription || SITE_NAME;
+    }
+  } catch (error) {
+    console.error("Failed to load site metadata from DB:", error);
+  }
+
+  return {
+    metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
+    title: {
+      default: title,
+      template: `%s | ${title}`,
+    },
+    description,
+    applicationName: title,
+    manifest: "/site.webmanifest",
+    alternates: {
+      canonical: "/",
+      languages: { ru: "/", "x-default": "/" },
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    openGraph: {
+      type: "website",
+      siteName: title,
+      locale: "ru_RU",
+      url: "/",
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -52,7 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <SkipLink />
         {children}
-        <Footer />
+        <SiteFooter />
         <div className="theme-toggle-fixed">
           <ThemeToggle />
         </div>

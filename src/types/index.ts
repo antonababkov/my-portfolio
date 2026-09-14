@@ -12,6 +12,10 @@ export type Profile = {
   position: string;
   description: string;
   sliderAutoPlay: boolean;
+  siteTitle: string;
+  siteDescription: string;
+  email: string;
+  phone: string;
   photos: Photo[];
 };
 

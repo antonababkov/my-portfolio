@@ -15,7 +15,11 @@ const EditProjects = dynamic(() => import("./EditProjects"), {
   loading: () => <p className={styles.muted}>Загрузка…</p>,
 });
 
-type Tab = "about" | "projects";
+const EditSiteSettings = dynamic(() => import("./EditSiteSettings"), {
+  loading: () => <p className={styles.muted}>Загрузка…</p>,
+});
+
+type Tab = "about" | "projects" | "settings";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("about");
@@ -71,6 +75,13 @@ export default function AdminDashboard() {
         >
           Проекты
         </button>
+        <button
+          className={`${styles.tab} ${tab === "settings" ? styles.active : ""}`}
+          type="button"
+          onClick={() => setTab("settings")}
+        >
+          Настройки сайта
+        </button>
       </nav>
 
       <div className={styles.content}>
@@ -86,6 +97,14 @@ export default function AdminDashboard() {
 
         {!loading && tab === "projects" && (
           <EditProjects projects={projects} onChange={setProjects} />
+        )}
+
+        {!loading && tab === "settings" && profile && (
+          <EditSiteSettings profile={profile} onSaved={setProfile} />
+        )}
+
+        {!loading && tab === "settings" && !profile && (
+          <p className={styles.muted}>Профиль не найден</p>
         )}
       </div>
     </main>
