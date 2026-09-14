@@ -30,9 +30,13 @@ export async function PUT(request: Request) {
     position?: string;
     description?: string;
     sliderAutoPlay?: boolean;
+    siteTitle?: string;
+    siteDescription?: string;
+    email?: string;
+    phone?: string;
   } = await request.json();
 
-  const { fullName, position, description, sliderAutoPlay } = body;
+  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone } = body;
 
   if (!fullName || !position || !description) {
     return NextResponse.json(
@@ -56,6 +60,10 @@ export async function PUT(request: Request) {
         position,
         description,
         sliderAutoPlay: sliderAutoPlay ?? false,
+        ...(siteTitle !== undefined ? { siteTitle } : {}),
+        ...(siteDescription !== undefined ? { siteDescription } : {}),
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
       },
     });
   } else {
@@ -66,6 +74,10 @@ export async function PUT(request: Request) {
         position,
         description,
         ...(sliderAutoPlay !== undefined ? { sliderAutoPlay } : {}),
+        ...(siteTitle !== undefined ? { siteTitle } : {}),
+        ...(siteDescription !== undefined ? { siteDescription } : {}),
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
       },
     });
   }
