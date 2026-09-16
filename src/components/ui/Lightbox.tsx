@@ -99,7 +99,7 @@ export default function Lightbox({
         )}
 
         <div className={styles.imageWrap}>
-          <Image className={styles.image} src={src} alt={alt} fill sizes="92vw" priority />
+          <Image className={styles.image} src={src} alt={alt} fill quality={90} sizes="100vw" priority />
         </div>
 
         {hasNext && (
