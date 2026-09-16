@@ -11,14 +11,19 @@ type EditProjectsProps = {
   onChange: (projects: Project[]) => void;
 };
 
+type ModalState =
+  | { mode: "new" }
+  | { mode: "edit"; projectId: string };
+
 export default function EditProjects({ projects, onChange }: EditProjectsProps) {
-  const [modal, setModal] = useState<
-    | null
-    | { mode: "new" }
-    | { mode: "edit"; project: Project }
-  >();
+  const [modal, setModal] = useState<null | ModalState>(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const editing =
+    modal?.mode === "edit" && modal.projectId
+      ? projects.find((p) => p.id === modal.projectId)
+      : null;
 
   async function handleDelete(project: Project) {
     setBusy(true);
@@ -79,7 +84,7 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
               <button
                 className={styles.editBtn}
                 type="button"
-                onClick={() => setModal({ mode: "edit", project })}
+                onClick={() => setModal({ mode: "edit", projectId: project.id })}
               >
                 Редактировать
               </button>
@@ -97,9 +102,20 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
 
       {modal && (
         <ProjectForm
-          project={modal.mode === "edit" ? modal.project : null}
+          project={modal.mode === "edit" ? editing : null}
           onClose={() => setModal(null)}
           onSaved={handleSaved}
+          onPhotosChange={(updatedPhotos) => {
+            if (modal.mode === "edit" && modal.projectId) {
+              onChange(
+                projects.map((p) =>
+                  p.id === modal.projectId
+                    ? { ...p, photos: updatedPhotos }
+                    : p
+                )
+              );
+            }
+          }}
         />
       )}
 

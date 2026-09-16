@@ -10,12 +10,14 @@ type ProjectFormProps = {
   project?: Project | null;
   onClose: () => void;
   onSaved: (project: Project) => void;
+  onPhotosChange?: (photos: Photo[]) => void;
 };
 
 export default function ProjectForm({
   project: initial,
   onClose,
   onSaved,
+  onPhotosChange,
 }: ProjectFormProps) {
   const isNew = !initial;
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -62,7 +64,7 @@ export default function ProjectForm({
         description: data.description,
         link: data.link ?? null,
         order: data.order,
-        photos: initial?.photos ?? [],
+        photos,
       });
     } catch {
       setError("Ошибка соединения с сервером");
@@ -135,6 +137,7 @@ export default function ProjectForm({
             photos={photos}
             owner={{ projectId: initial.id }}
             onChange={setPhotos}
+            onPhotosChange={onPhotosChange}
           />
         </div>
       )}
