@@ -21,8 +21,18 @@ const EditSiteSettings = dynamic(() => import("./EditSiteSettings"), {
 
 type Tab = "about" | "projects" | "settings";
 
-export default function AdminDashboard() {
-  const [tab, setTab] = useState<Tab>("about");
+type AdminDashboardProps = {
+  initialTab?: Tab;
+};
+
+function writeTabToUrl(tab: Tab) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("tab", tab);
+  window.history.replaceState(null, "", url);
+}
+
+export default function AdminDashboard({ initialTab }: AdminDashboardProps) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "about");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,21 +74,30 @@ export default function AdminDashboard() {
         <button
           className={`${styles.tab} ${tab === "about" ? styles.active : ""}`}
           type="button"
-          onClick={() => setTab("about")}
+          onClick={() => {
+            setTab("about");
+            writeTabToUrl("about");
+          }}
         >
           О себе
         </button>
         <button
           className={`${styles.tab} ${tab === "projects" ? styles.active : ""}`}
           type="button"
-          onClick={() => setTab("projects")}
+          onClick={() => {
+            setTab("projects");
+            writeTabToUrl("projects");
+          }}
         >
           Проекты
         </button>
         <button
           className={`${styles.tab} ${tab === "settings" ? styles.active : ""}`}
           type="button"
-          onClick={() => setTab("settings")}
+          onClick={() => {
+            setTab("settings");
+            writeTabToUrl("settings");
+          }}
         >
           Настройки сайта
         </button>
