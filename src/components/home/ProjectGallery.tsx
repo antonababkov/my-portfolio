@@ -71,6 +71,7 @@ export default function ProjectGallery({ photos }: ProjectGalleryProps) {
           src={photoUrl(photo.url)}
           alt={photo.alt}
           fill
+          quality={90}
           sizes="(max-width: 768px) 100vw, 50vw"
           loading={index === 0 ? "eager" : "lazy"}
           className={styles.image}

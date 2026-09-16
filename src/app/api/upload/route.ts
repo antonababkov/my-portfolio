@@ -14,7 +14,6 @@ const EXT_BY_MIME: Record<string, string> = {
   "image/webp": "webp",
 };
 
-const PROFILE_MAX_SIZE = 394;
 const PROFILE_MIN_SIZE = 120;
 
 const publicDir = path.join(process.cwd(), "public");
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
   const fileName = `${randomUUID()}.${extension}`;
 
   const variant = formData.get("variant");
-  let buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = Buffer.from(await file.arrayBuffer());
 
   if (variant === "profile") {
     const metadata = await sharp(buffer).metadata();
@@ -69,14 +68,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    buffer = await sharp(buffer)
-      .resize({
-        width: PROFILE_MAX_SIZE,
-        height: PROFILE_MAX_SIZE,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .toBuffer();
   }
 
   await mkdir(uploadsDir, { recursive: true });

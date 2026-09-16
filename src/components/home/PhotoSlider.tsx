@@ -33,6 +33,7 @@ export default function PhotoSlider({
           src={photoUrl(photo.url)}
           alt={photo.alt}
           fill
+          quality={90}
           priority={index === 0}
           sizes="(max-width: 768px) 100vw, 50vw"
           className={styles.image}
