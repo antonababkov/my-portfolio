@@ -97,6 +97,37 @@
 .itemActions {
   display: flex;
   gap: v.$space-2;
+  align-items: center;
+}
+
+.moveGroup {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.moveBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-sm;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: v.$font-size-sm;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-background-secondary);
+  }
 }
 
 .editBtn {
@@ -171,4 +202,10 @@
 .muted {
   margin: 0;
   color: var(--color-foreground-muted);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: v.$font-size-sm;
 }

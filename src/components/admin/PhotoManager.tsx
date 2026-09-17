@@ -46,9 +46,11 @@ export default function PhotoManager({ photos, owner, onChange, onPhotosChange }
         setError(data.error || "Не удалось добавить фото");
         return;
       }
-      const next = [...photos, data];
-      onChange(next);
-      onPhotosChange?.(next);
+      onChange((prev) => {
+        const next = [...prev, data];
+        onPhotosChange?.(next);
+        return next;
+      });
     } catch {
       setError("Ошибка соединения с сервером");
     } finally {
@@ -65,9 +67,11 @@ export default function PhotoManager({ photos, owner, onChange, onPhotosChange }
         setError("Не удалось удалить фото");
         return;
       }
-      const next = photos.filter((p) => p.id !== photo.id);
-      onChange(next);
-      onPhotosChange?.(next);
+      onChange((prev) => {
+        const next = prev.filter((p) => p.id !== photo.id);
+        onPhotosChange?.(next);
+        return next;
+      });
     } finally {
       setBusy(false);
     }
@@ -87,11 +91,13 @@ export default function PhotoManager({ photos, owner, onChange, onPhotosChange }
         setError(data.error || "Не удалось сохранить описание");
         return;
       }
-      const next = photos.map((p) =>
-        p.id === photo.id ? { ...p, description: data.description } : p
-      );
-      onChange(next);
-      onPhotosChange?.(next);
+      onChange((prev) => {
+        const next = prev.map((p) =>
+          p.id === photo.id ? { ...p, description: data.description } : p
+        );
+        onPhotosChange?.(next);
+        return next;
+      });
     } catch {
       setError("Ошибка сохранения описания");
     } finally {
@@ -107,11 +113,14 @@ export default function PhotoManager({ photos, owner, onChange, onPhotosChange }
     const [item] = list.splice(index, 1);
     list.splice(target, 0, item);
 
-    const items = list.map((p, i) => ({ id: p.id, order: i }));
-    const byId = new Map(photos.map((p) => [p.id, p]));
-    const next = list.map((p, i) => ({ ...(byId.get(p.id) ?? p), order: i }));
-    onChange(next);
-    onPhotosChange?.(next);
+    let items: { id: string; order: number }[] = [];
+    onChange((prev) => {
+      items = list.map((p, i) => ({ id: p.id, order: i }));
+      const byId = new Map(prev.map((p) => [p.id, p]));
+      const next = list.map((p, i) => ({ ...(byId.get(p.id) ?? p), order: i }));
+      onPhotosChange?.(next);
+      return next;
+    });
     setError(null);
 
     try {

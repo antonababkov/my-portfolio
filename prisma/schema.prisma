@@ -20,6 +20,9 @@ model Profile {
   siteDescription String  @default("Личный сайт-портфолио")
   email           String  @default("hello@example.com")
   phone           String  @default("+7 (900) 000-00-00")
+  aboutExtraTitle String  @default("Обо мне")
+  aboutExtra      String  @default("")
+  aboutExtraVisible Boolean @default(false)
   photos         Photo[]
 }
 

@@ -1,0 +1,31 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.section {
+  width: 100%;
+  margin-top: v.$space-9;
+}
+
+.header {
+  margin-bottom: v.$space-5;
+}
+
+.heading {
+  font-family: v.$font-sans;
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-bold;
+  color: var(--color-foreground);
+  margin: 0;
+
+  @include m.respond-to("tablet") {
+    font-size: v.$font-size-3xl;
+  }
+}
+
+.content {
+  white-space: pre-wrap;
+  font-family: v.$font-sans;
+  font-size: v.$font-size-lg;
+  line-height: v.$line-height-relaxed;
+  color: var(--color-foreground-secondary);
+}

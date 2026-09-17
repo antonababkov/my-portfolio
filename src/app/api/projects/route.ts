@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
+
+const ReorderSchema = z.object({
+  items: z.array(z.object({ id: z.string(), order: z.number().int() })),
+});
 
 export async function GET() {
   const projects = await db.project.findMany({
@@ -49,4 +54,29 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json(project, { status: 201 });
+}
+
+export async function PUT(request: Request) {
+  if (!(await getSessionUser())) {
+    return unauthorizedResponse();
+  }
+
+  const csrf = assertSameOrigin(request);
+  if (csrf) {
+    return csrf;
+  }
+
+  const parsed = ReorderSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message || "Некорректные данные" },
+      { status: 400 }
+    );
+  }
+
+  for (const { id, order } of parsed.data.items) {
+    await db.project.update({ where: { id }, data: { order } });
+  }
+
+  return NextResponse.json({ ok: true });
 }

@@ -15,6 +15,9 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
   const [fullName, setFullName] = useState(initial.fullName);
   const [position, setPosition] = useState(initial.position);
   const [description, setDescription] = useState(initial.description);
+  const [aboutExtraTitle, setAboutExtraTitle] = useState(initial.aboutExtraTitle);
+  const [aboutExtra, setAboutExtra] = useState(initial.aboutExtra);
+  const [aboutExtraVisible, setAboutExtraVisible] = useState(initial.aboutExtraVisible);
   const [sliderAutoPlay, setSliderAutoPlay] = useState(initial.sliderAutoPlay);
   const [photos, setPhotos] = useState<Photo[]>(initial.photos);
   const [saving, setSaving] = useState(false);
@@ -24,6 +27,9 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
     fullName !== profile.fullName ||
     position !== profile.position ||
     description !== profile.description ||
+    aboutExtraTitle !== profile.aboutExtraTitle ||
+    aboutExtra !== profile.aboutExtra ||
+    aboutExtraVisible !== profile.aboutExtraVisible ||
     sliderAutoPlay !== profile.sliderAutoPlay;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,6 +45,9 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
           fullName,
           position,
           description,
+          aboutExtraTitle,
+          aboutExtra,
+          aboutExtraVisible,
           sliderAutoPlay,
         }),
       });
@@ -52,6 +61,9 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
         fullName,
         position,
         description,
+        aboutExtraTitle,
+        aboutExtra,
+        aboutExtraVisible,
         sliderAutoPlay,
         photos,
       });
@@ -96,6 +108,37 @@ export default function EditAbout({ profile: initial, onSaved }: EditAboutProps)
             rows={5}
             required
           />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Дополнительное описание (заголовок секции)</span>
+          <input
+            className={styles.input}
+            value={aboutExtraTitle}
+            onChange={(e) => setAboutExtraTitle(e.target.value)}
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Дополнительное описание</span>
+          <textarea
+            className={styles.textarea}
+            value={aboutExtra}
+            onChange={(e) => setAboutExtra(e.target.value)}
+            rows={5}
+          />
+        </label>
+
+        <label className={styles.checkboxWrapper}>
+          <input
+            type="checkbox"
+            className={styles.checkboxInput}
+            checked={aboutExtraVisible}
+            onChange={(e) => setAboutExtraVisible(e.target.checked)}
+          />
+          <span className={styles.label}>
+            Показывать дополнительное описание на главной
+          </span>
         </label>
 
         <label className={styles.checkboxWrapper}>

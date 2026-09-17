@@ -19,6 +19,7 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
   const [modal, setModal] = useState<null | ModalState>(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reorderError, setReorderError] = useState<string | null>(null);
 
   const editing =
     modal?.mode === "edit" && modal.projectId
@@ -51,6 +52,35 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
     setModal(null);
   }
 
+  async function move(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= projects.length) return;
+
+    const list = [...projects];
+    const [item] = list.splice(index, 1);
+    list.splice(target, 0, item);
+
+    const byId = new Map(projects.map((p) => [p.id, p]));
+    const next = list.map((p, i) => ({ ...(byId.get(p.id) ?? p), order: i }));
+    onChange(next);
+    setReorderError(null);
+
+    try {
+      const res = await fetch("/api/projects", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: next.map((p) => ({ id: p.id, order: p.order })),
+        }),
+      });
+      if (!res.ok) {
+        setReorderError("Не удалось сохранить порядок проектов");
+      }
+    } catch {
+      setReorderError("Ошибка сохранения порядка проектов");
+    }
+  }
+
   return (
     <section className={styles.section}>
       <header className={styles.header}>
@@ -69,7 +99,7 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
       )}
 
       <ul className={styles.list}>
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <li key={project.id} className={styles.item}>
             <div className={styles.itemContent}>
               <span className={styles.itemTitle}>{project.title}</span>
@@ -81,6 +111,26 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
               </span>
             </div>
             <div className={styles.itemActions}>
+              <span className={styles.moveGroup}>
+                <button
+                  className={styles.moveBtn}
+                  type="button"
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  aria-label="Переместить выше"
+                >
+                  ↑
+                </button>
+                <button
+                  className={styles.moveBtn}
+                  type="button"
+                  onClick={() => move(index, 1)}
+                  disabled={index === projects.length - 1}
+                  aria-label="Переместить ниже"
+                >
+                  ↓
+                </button>
+              </span>
               <button
                 className={styles.editBtn}
                 type="button"
@@ -99,6 +149,8 @@ export default function EditProjects({ projects, onChange }: EditProjectsProps) 
           </li>
         ))}
       </ul>
+
+      {reorderError && <p className={styles.error} role="alert">{reorderError}</p>}
 
       {modal && (
         <ProjectForm
