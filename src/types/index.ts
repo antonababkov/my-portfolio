@@ -16,6 +16,9 @@ export type Profile = {
   siteDescription: string;
   email: string;
   phone: string;
+  aboutExtraTitle: string;
+  aboutExtra: string;
+  aboutExtraVisible: boolean;
   photos: Photo[];
 };
 

@@ -34,9 +34,12 @@ export async function PUT(request: Request) {
     siteDescription?: string;
     email?: string;
     phone?: string;
+    aboutExtraTitle?: string;
+    aboutExtra?: string;
+    aboutExtraVisible?: boolean;
   } = await request.json();
 
-  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone } = body;
+  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible } = body;
 
   if (!fullName || !position || !description) {
     return NextResponse.json(
@@ -48,6 +51,13 @@ export async function PUT(request: Request) {
   if (sliderAutoPlay !== undefined && typeof sliderAutoPlay !== "boolean") {
     return NextResponse.json(
       { error: "Field sliderAutoPlay must be a boolean" },
+      { status: 400 }
+    );
+  }
+
+  if (aboutExtraVisible !== undefined && typeof aboutExtraVisible !== "boolean") {
+    return NextResponse.json(
+      { error: "Field aboutExtraVisible must be a boolean" },
       { status: 400 }
     );
   }
@@ -64,6 +74,9 @@ export async function PUT(request: Request) {
         ...(siteDescription !== undefined ? { siteDescription } : {}),
         ...(email !== undefined ? { email } : {}),
         ...(phone !== undefined ? { phone } : {}),
+        ...(aboutExtraTitle !== undefined ? { aboutExtraTitle } : {}),
+        ...(aboutExtra !== undefined ? { aboutExtra } : {}),
+        ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
       },
     });
   } else {
@@ -78,6 +91,9 @@ export async function PUT(request: Request) {
         ...(siteDescription !== undefined ? { siteDescription } : {}),
         ...(email !== undefined ? { email } : {}),
         ...(phone !== undefined ? { phone } : {}),
+        ...(aboutExtraTitle !== undefined ? { aboutExtraTitle } : {}),
+        ...(aboutExtra !== undefined ? { aboutExtra } : {}),
+        ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
       },
     });
   }

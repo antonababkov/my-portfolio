@@ -1,4 +1,5 @@
 import AboutSection from "@/components/home/AboutSection";
+import AboutExtraSection from "@/components/home/AboutExtraSection";
 import ProjectsSection from "@/components/home/ProjectsSection";
 import { getProfile, getProjects } from "@/lib/api";
 import { SOCIALS } from "@/lib/constants";
@@ -45,6 +46,7 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
       />
       <AboutSection profile={profile} />
+      <AboutExtraSection profile={profile} />
       <ProjectsSection projects={projects} />
     </main>
   );
