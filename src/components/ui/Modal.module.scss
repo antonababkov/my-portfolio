@@ -63,6 +63,7 @@
   font-size: v.$font-size-base;
   line-height: v.$line-height-relaxed;
   color: var(--color-foreground-secondary);
+  background: var(--color-background);
 
   @include m.respond-to("tablet") {
     padding: v.$space-5;
