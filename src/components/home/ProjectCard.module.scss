@@ -64,6 +64,7 @@
 }
 
 .description {
+  white-space: pre-wrap;
   font-family: v.$font-sans;
   font-size: v.$font-size-base;
   line-height: v.$line-height-relaxed;

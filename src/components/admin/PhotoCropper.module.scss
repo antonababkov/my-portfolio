@@ -1,0 +1,89 @@
+@use "../../styles/variables" as v;
+@use "../../styles/mixins" as m;
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: v.$space-3;
+}
+
+.stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+  touch-action: none;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  max-height: 45vh;
+  width: auto;
+  height: auto;
+  border-radius: v.$radius-md;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.frame {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--color-accent);
+  cursor: move;
+  touch-action: none;
+}
+
+.shade {
+  position: absolute;
+  // background: rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 1px, transparent 1px);
+  background-position:
+    calc(33.333% + 0.5px), calc(66.666% + 0.5px), calc(33.333% + 0.5px),
+    calc(66.666% + 0.5px);
+  background-size:
+    1px 100%,
+    1px 100%,
+    100% 1px,
+    100% 1px;
+  background-repeat: no-repeat;
+}
+
+.handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 2px solid var(--color-accent);
+  border-radius: v.$radius-full;
+  background: var(--color-background-elevated);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.size {
+  margin: 0;
+  color: var(--color-foreground-secondary);
+  font-size: v.$font-size-sm;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-foreground-muted);
+  font-size: v.$font-size-sm;
+  text-align: center;
+}
