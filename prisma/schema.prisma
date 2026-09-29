@@ -25,6 +25,7 @@ model Profile {
   aboutExtraVisible Boolean @default(false)
   privacyPolicy   String  @default("")
   personalDataPolicy String @default("")
+  operatorAddress String  @default("")
   photos         Photo[]
 }
 

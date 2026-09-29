@@ -18,6 +18,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
   const [siteDescription, setSiteDescription] = useState(initial.siteDescription);
   const [email, setEmail] = useState(initial.email);
   const [phone, setPhone] = useState(initial.phone);
+  const [operatorAddress, setOperatorAddress] = useState(initial.operatorAddress);
   const [privacyPolicy, setPrivacyPolicy] = useState(
     initial.privacyPolicy.trim() || PRIVACY_POLICY_TEXT,
   );
@@ -32,6 +33,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
     siteDescription !== profile.siteDescription ||
     email !== profile.email ||
     phone !== profile.phone ||
+    operatorAddress !== profile.operatorAddress ||
     privacyPolicy !== (profile.privacyPolicy.trim() || PRIVACY_POLICY_TEXT) ||
     personalDataPolicy !==
       (profile.personalDataPolicy.trim() || PERSONAL_DATA_POLICY_TEXT);
@@ -54,6 +56,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
           siteDescription,
           email,
           phone,
+          operatorAddress,
           privacyPolicy,
           personalDataPolicy,
         }),
@@ -69,6 +72,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
         siteDescription,
         email,
         phone,
+        operatorAddress,
         privacyPolicy,
         personalDataPolicy,
       });
@@ -134,6 +138,20 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
           />
         </label>
 
+        <label className={styles.field}>
+          <span className={styles.label}>Адрес оператора</span>
+          <input
+            className={styles.input}
+            type="text"
+            value={operatorAddress}
+            onChange={(e) => setOperatorAddress(e.target.value)}
+            placeholder="Например: 123456, Москва, ул. Примерная, д. 1"
+          />
+          <span className={styles.hint}>
+            Указывается в&nbsp;политиках в&nbsp;соответствии с&nbsp;152-ФЗ. Если поле пустое, подставляется «адрес уточняется по&nbsp;запросу».
+          </span>
+        </label>
+
         <h3 className={styles.subheading}>Документы</h3>
 
         <label className={styles.field}>
@@ -145,7 +163,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
             rows={12}
           />
           <span className={styles.hint}>
-            Отображается в&nbsp;модальном окне футера сайта. Поддерживаются переносы строк.
+            Отображается в&nbsp;модальном окне футера сайта. Плейсхолдеры {"{{fullName}}"}, {"{{email}}"}, {"{{phone}}"}, {"{{operatorAddress}}"} подставляются автоматически из&nbsp;настроек сайта.
           </span>
         </label>
 
@@ -158,7 +176,7 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
             rows={12}
           />
           <span className={styles.hint}>
-            Отображается в&nbsp;модальном окне футера сайта. Поддерживаются переносы строк.
+            Отображается в&nbsp;модальном окне футера сайта. Плейсхолдеры {"{{fullName}}"}, {"{{email}}"}, {"{{phone}}"}, {"{{operatorAddress}}"} подставляются автоматически из&nbsp;настроек сайта.
           </span>
         </label>
 

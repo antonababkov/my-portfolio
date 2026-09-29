@@ -39,9 +39,10 @@ export async function PUT(request: Request) {
     aboutExtraVisible?: boolean;
     privacyPolicy?: string;
     personalDataPolicy?: string;
+    operatorAddress?: string;
   } = await request.json();
 
-  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible, privacyPolicy, personalDataPolicy } = body;
+  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible, privacyPolicy, personalDataPolicy, operatorAddress } = body;
 
   if (!fullName || !position || !description) {
     return NextResponse.json(
@@ -78,6 +79,13 @@ export async function PUT(request: Request) {
     );
   }
 
+  if (operatorAddress !== undefined && typeof operatorAddress !== "string") {
+    return NextResponse.json(
+      { error: "Field operatorAddress must be a string" },
+      { status: 400 }
+    );
+  }
+
   let profile = await db.profile.findFirst();
   if (!profile) {
     profile = await db.profile.create({
@@ -95,6 +103,7 @@ export async function PUT(request: Request) {
         ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
         ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
         ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
+        ...(operatorAddress !== undefined ? { operatorAddress } : {}),
       },
     });
   } else {
@@ -114,6 +123,7 @@ export async function PUT(request: Request) {
         ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
         ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
         ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
+        ...(operatorAddress !== undefined ? { operatorAddress } : {}),
       },
     });
   }

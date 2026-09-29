@@ -21,6 +21,7 @@ export type Profile = {
   aboutExtraVisible: boolean;
   privacyPolicy: string;
   personalDataPolicy: string;
+  operatorAddress: string;
   photos: Photo[];
 };
 
