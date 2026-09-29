@@ -5,6 +5,7 @@ import { themeInitScript } from "@/lib/theme";
 import { SITE_NAME } from "@/lib/constants";
 import { getProfile } from "@/lib/api";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import CookieConsent from "@/components/ui/CookieConsent";
 import SiteFooter from "@/components/footer/SiteFooter";
 import "./globals.scss";
 import { SkipLink } from "@/components/ui/SkipLink";
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="theme-toggle-fixed">
           <ThemeToggle />
         </div>
+        <CookieConsent />
       </body>
     </html>
   );

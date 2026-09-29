@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { SOCIALS } from "@/lib/constants";
+import { openConsent } from "@/lib/consent";
 import styles from "./Footer.module.scss";
 
 type FooterProps = {
@@ -75,6 +76,13 @@ export default function Footer({
             onClick={() => setOpenPolicy("personalData")}
           >
             Правила обработки ПДн
+          </button>
+          <button
+            type="button"
+            className={styles.policyLink}
+            onClick={openConsent}
+          >
+            Настройки cookies
           </button>
         </nav>
       </div>

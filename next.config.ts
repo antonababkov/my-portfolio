@@ -8,11 +8,12 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   // theme-init (inline) и JSON-LD инлайнятся напрямую в HTML
   // unsafe-eval нужен React в dev-режиме (hot-reload, стек-трейсы)
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  // Яндекс.Метрика подключается только после согласия пользователя
+  `script-src 'self' 'unsafe-inline' https://mc.yandex.ru https://yastatic.net${isDev ? " 'unsafe-eval'" : ""}`,
 
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://mc.yandex.ru",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://mc.yandex.ru",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
