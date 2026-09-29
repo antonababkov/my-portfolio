@@ -2,28 +2,31 @@
 
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
-import {
-  SOCIALS,
-  PRIVACY_POLICY_TEXT,
-  PERSONAL_DATA_POLICY_TEXT,
-} from "@/lib/constants";
+import { SOCIALS } from "@/lib/constants";
 import styles from "./Footer.module.scss";
 
 type FooterProps = {
   email: string;
   phone: string;
+  privacyPolicy: string;
+  personalDataPolicy: string;
 };
 
 type PolicyKey = "privacy" | "personalData" | null;
 
-export default function Footer({ email, phone }: FooterProps) {
+export default function Footer({
+  email,
+  phone,
+  privacyPolicy,
+  personalDataPolicy,
+}: FooterProps) {
   const [openPolicy, setOpenPolicy] = useState<PolicyKey>(null);
 
   const policies: Record<Exclude<PolicyKey, null>, { title: string; text: string }> = {
-    privacy: { title: "Политика конфиденциальности", text: PRIVACY_POLICY_TEXT },
+    privacy: { title: "Политика конфиденциальности", text: privacyPolicy },
     personalData: {
       title: "Правила обработки персональных данных",
-      text: PERSONAL_DATA_POLICY_TEXT,
+      text: personalDataPolicy,
     },
   };
 
