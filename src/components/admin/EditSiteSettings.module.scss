@@ -40,6 +40,11 @@
   line-height: v.$line-height-normal;
 }
 
+.subheading {
+  margin: 0;
+  font-size: v.$font-size-lg;
+}
+
 .input,
 .textarea {
   padding: v.$space-2 v.$space-3;
@@ -59,6 +64,12 @@
 .textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+.textareaLarge {
+  min-height: 280px;
+  line-height: v.$line-height-normal;
+  white-space: pre-wrap;
 }
 
 .save {

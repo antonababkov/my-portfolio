@@ -37,9 +37,12 @@ export async function PUT(request: Request) {
     aboutExtraTitle?: string;
     aboutExtra?: string;
     aboutExtraVisible?: boolean;
+    privacyPolicy?: string;
+    personalDataPolicy?: string;
+    operatorAddress?: string;
   } = await request.json();
 
-  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible } = body;
+  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible, privacyPolicy, personalDataPolicy, operatorAddress } = body;
 
   if (!fullName || !position || !description) {
     return NextResponse.json(
@@ -62,6 +65,27 @@ export async function PUT(request: Request) {
     );
   }
 
+  if (privacyPolicy !== undefined && typeof privacyPolicy !== "string") {
+    return NextResponse.json(
+      { error: "Field privacyPolicy must be a string" },
+      { status: 400 }
+    );
+  }
+
+  if (personalDataPolicy !== undefined && typeof personalDataPolicy !== "string") {
+    return NextResponse.json(
+      { error: "Field personalDataPolicy must be a string" },
+      { status: 400 }
+    );
+  }
+
+  if (operatorAddress !== undefined && typeof operatorAddress !== "string") {
+    return NextResponse.json(
+      { error: "Field operatorAddress must be a string" },
+      { status: 400 }
+    );
+  }
+
   let profile = await db.profile.findFirst();
   if (!profile) {
     profile = await db.profile.create({
@@ -77,6 +101,9 @@ export async function PUT(request: Request) {
         ...(aboutExtraTitle !== undefined ? { aboutExtraTitle } : {}),
         ...(aboutExtra !== undefined ? { aboutExtra } : {}),
         ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
+        ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
+        ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
+        ...(operatorAddress !== undefined ? { operatorAddress } : {}),
       },
     });
   } else {
@@ -94,6 +121,9 @@ export async function PUT(request: Request) {
         ...(aboutExtraTitle !== undefined ? { aboutExtraTitle } : {}),
         ...(aboutExtra !== undefined ? { aboutExtra } : {}),
         ...(aboutExtraVisible !== undefined ? { aboutExtraVisible } : {}),
+        ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
+        ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
+        ...(operatorAddress !== undefined ? { operatorAddress } : {}),
       },
     });
   }

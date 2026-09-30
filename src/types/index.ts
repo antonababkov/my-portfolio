@@ -19,6 +19,9 @@ export type Profile = {
   aboutExtraTitle: string;
   aboutExtra: string;
   aboutExtraVisible: boolean;
+  privacyPolicy: string;
+  personalDataPolicy: string;
+  operatorAddress: string;
   photos: Photo[];
 };
 

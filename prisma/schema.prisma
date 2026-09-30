@@ -23,6 +23,9 @@ model Profile {
   aboutExtraTitle String  @default("Обо мне")
   aboutExtra      String  @default("")
   aboutExtraVisible Boolean @default(false)
+  privacyPolicy   String  @default("")
+  personalDataPolicy String @default("")
+  operatorAddress String  @default("")
   photos         Photo[]
 }
 

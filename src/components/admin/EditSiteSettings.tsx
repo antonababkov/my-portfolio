@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Profile } from "@/types";
+import { PRIVACY_POLICY_TEXT, PERSONAL_DATA_POLICY_TEXT } from "@/lib/constants";
 import styles from "./EditSiteSettings.module.scss";
 
 type EditSiteSettingsProps = {
@@ -10,11 +12,19 @@ type EditSiteSettingsProps = {
 };
 
 export default function EditSiteSettings({ profile: initial, onSaved }: EditSiteSettingsProps) {
+  const router = useRouter();
   const [profile] = useState(initial);
   const [siteTitle, setSiteTitle] = useState(initial.siteTitle);
   const [siteDescription, setSiteDescription] = useState(initial.siteDescription);
   const [email, setEmail] = useState(initial.email);
   const [phone, setPhone] = useState(initial.phone);
+  const [operatorAddress, setOperatorAddress] = useState(initial.operatorAddress);
+  const [privacyPolicy, setPrivacyPolicy] = useState(
+    initial.privacyPolicy.trim() || PRIVACY_POLICY_TEXT,
+  );
+  const [personalDataPolicy, setPersonalDataPolicy] = useState(
+    initial.personalDataPolicy.trim() || PERSONAL_DATA_POLICY_TEXT,
+  );
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "ok" | "error">("idle");
 
@@ -22,7 +32,11 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
     siteTitle !== profile.siteTitle ||
     siteDescription !== profile.siteDescription ||
     email !== profile.email ||
-    phone !== profile.phone;
+    phone !== profile.phone ||
+    operatorAddress !== profile.operatorAddress ||
+    privacyPolicy !== (profile.privacyPolicy.trim() || PRIVACY_POLICY_TEXT) ||
+    personalDataPolicy !==
+      (profile.personalDataPolicy.trim() || PERSONAL_DATA_POLICY_TEXT);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +56,9 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
           siteDescription,
           email,
           phone,
+          operatorAddress,
+          privacyPolicy,
+          personalDataPolicy,
         }),
       });
       if (!res.ok) {
@@ -55,7 +72,11 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
         siteDescription,
         email,
         phone,
+        operatorAddress,
+        privacyPolicy,
+        personalDataPolicy,
       });
+      router.refresh();
     } catch {
       setStatus("error");
     } finally {
@@ -115,6 +136,48 @@ export default function EditSiteSettings({ profile: initial, onSaved }: EditSite
             onChange={(e) => setPhone(e.target.value)}
             required
           />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Адрес оператора</span>
+          <input
+            className={styles.input}
+            type="text"
+            value={operatorAddress}
+            onChange={(e) => setOperatorAddress(e.target.value)}
+            placeholder="Например: 123456, Москва, ул. Примерная, д. 1"
+          />
+          <span className={styles.hint}>
+            Указывается в&nbsp;политиках в&nbsp;соответствии с&nbsp;152-ФЗ. Если поле пустое, подставляется «адрес уточняется по&nbsp;запросу».
+          </span>
+        </label>
+
+        <h3 className={styles.subheading}>Документы</h3>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Политика конфиденциальности</span>
+          <textarea
+            className={`${styles.textarea} ${styles.textareaLarge}`}
+            value={privacyPolicy}
+            onChange={(e) => setPrivacyPolicy(e.target.value)}
+            rows={12}
+          />
+          <span className={styles.hint}>
+            Отображается в&nbsp;модальном окне футера сайта. Плейсхолдеры {"{{fullName}}"}, {"{{email}}"}, {"{{phone}}"}, {"{{operatorAddress}}"} подставляются автоматически из&nbsp;настроек сайта.
+          </span>
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Правила обработки ПДн</span>
+          <textarea
+            className={`${styles.textarea} ${styles.textareaLarge}`}
+            value={personalDataPolicy}
+            onChange={(e) => setPersonalDataPolicy(e.target.value)}
+            rows={12}
+          />
+          <span className={styles.hint}>
+            Отображается в&nbsp;модальном окне футера сайта. Плейсхолдеры {"{{fullName}}"}, {"{{email}}"}, {"{{phone}}"}, {"{{operatorAddress}}"} подставляются автоматически из&nbsp;настроек сайта.
+          </span>
         </label>
 
         {status === "ok" && (
