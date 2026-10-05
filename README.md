@@ -14,7 +14,7 @@
 | Авторизация        | JWT (httpOnly-cookie) + bcryptjs                                             |
 | Файлы              | `sharp`, загрузка в `/uploads`, immutable Cache-Control                      |
 | Dev-инфраструктура | TypeScript 5, ESLint 9, Autoprefixer                                         |
-| Деплой             | Docker multi-stage + docker-compose (db / migrate / app), Caddy (авто-HTTPS) |
+| Деплой             | Docker multi-stage + docker-compose (db / migrate / app), nginx + certbot (TLS) |
 
 ---
 
@@ -35,7 +35,8 @@ my-portfolio/
 ├─ docker/
 │  ├─ Dockerfile           # multi-stage: deps → builder → migrator → runner (standalone)
 │  ├─ docker-compose.yml   # db / migrate / app (+ healthcheck)
-│  └─ Caddyfile            # reverse-proxy + автоматический HTTPS
+│  └─ nginx/
+│     └─ portfolio.conf    # reverse-proxy на хосте VPS + TLS (Let's Encrypt)
 ├─ prisma/
 │  ├─ schema.prisma        # модели Profile, Photo, Project, Admin
 │  ├─ migrations/          # SQL-миграции
@@ -118,9 +119,52 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 - **migrate** — применяет миграции (`prisma migrate deploy`) и запускает seed (создаёт профиль, демо-проекты и админа). Работает один раз, `restart: "no"`. Требует `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` из `.env` (без дефолтов — иначе compose не поднимется).
 - **app** — standalone-сборка Next.js, volume `uploads`, порт `127.0.0.1:3000`, env `HOSTNAME=0.0.0.0` (иначе Next слушает IP контейнера и healthcheck по `127.0.0.1` не сработает), healthcheck через `GET /api/health` (30s interval, старт-период 40s).
 
-### HTTPS (Caddy)
+### HTTPS (nginx)
 
-`docker/Caddyfile` — обратный прокси с автоматическим HTTPS (Let's Encrypt). Подмените `example.com` на ваш домен и прокидывайте трафик к `127.0.0.1:3000`.
+nginx запускается **на хосте**, вне Docker-стэка (как раньше Caddy). Конфиг — `docker/nginx/portfolio.conf`, проксирует на `127.0.0.1:3000`. Сертификаты выпускает `certbot`, автопродление — `certbot.timer`.
+
+Домен рабочий — `ababkov-ao.ru`. Сертификат покрывает и `www.ababkov-ao.ru`, но тот только редиректит на apex (по HTTP и по HTTPS), чтобы не было ошибки несовпадения имени.
+
+```bash
+# 1. Пакеты
+apt update && apt install -y nginx certbot
+
+# 2. Конфиг: подставьте свой домен вместо ababkov-ao.ru
+mkdir -p /var/www/certbot && chown www-data: /var/www/certbot
+cp docker/nginx/portfolio.conf /etc/nginx/sites-available/portfolio.conf
+ln -s /etc/nginx/sites-available/portfolio.conf /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# 3. Сертификат: сначала работает только :80, блок :443 временно закомментирован
+#    (nginx не стартует, пока нет ssl-файлов)
+nginx -t && systemctl reload nginx
+certbot certonly --webroot -w /var/www/certbot \
+  -d ababkov-ao.ru -d www.ababkov-ao.ru \
+  --agree-tos -m you@example.com --non-interactive
+
+# 4. Вернуть блок :443 в конфиге и включить автопродление
+nginx -t && systemctl reload nginx
+systemctl enable --now certbot.timer
+```
+
+Требования: A-записи на `ababkov-ao.ru` и `www.ababkov-ao.ru` → IP VPS, порты 80 и 443 открыты (ACME-челлендж идёт по HTTP).
+
+Проверка:
+
+```bash
+curl -I http://ababkov-ao.ru             # 301 → https
+curl -I https://ababkov-ao.ru            # 200, HSTS ровно один
+curl -I http://www.ababkov-ao.ru         # 301 → https://ababkov-ao.ru
+curl -I https://www.ababkov-ao.ru        # 301 → https://ababkov-ao.ru (без ошибки TLS)
+certbot renew --dry-run                  # проверка продления
+```
+
+Особенности конфига, которые нельзя потерять при правках:
+
+- **`proxy_set_header X-Forwarded-For $remote_addr`** (а не `$proxy_add_x_forwarded_for`) — `getClientIp()` в `src/lib/rate-limit.ts` берёт первое значение XFF; с append'ом клиент подставлял бы свой IP и обходил rate-limit логина.
+- **`limit_req_zone` + `location = /api/auth/login`** — 5 запросов/мин на IP (`burst=5 nodelay`) до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому не опускайте ниже `LOGIN_MAX_ATTEMPTS` (`src/lib/rate-limit.ts:72`).
+- **`client_max_body_size 8m`** — дефолт nginx 1m обрезал бы загрузку фотографий (приложение лимитирует 5 МБ).
+- **Security-заголовки не дублируются** — их отдаёт `next.config.ts`; `add_header` в nginx добавляет, а не заменяет, поэтому дубль давал бы два HSTS с разным `max-age`.
 
 ---
 

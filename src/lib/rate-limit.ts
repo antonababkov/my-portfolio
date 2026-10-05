@@ -54,7 +54,7 @@ export function rateLimit(
   return true;
 }
 
-/** Извлекает клиентский IP из заголовков (за reverse-proxy/Caddy). */
+/** Извлекает клиентский IP из заголовков (за reverse-proxy nginx). */
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
