@@ -1,175 +1,373 @@
-# План деплоя на Jino VPS (Docker + nginx, сборка контейнеров локально)
+# План деплоя на Jino VPS (Docker + nginx)
 
-## 1. Краткое описание
+## 1. Что где работает
 
-Данный план описывает процесс упаковки и развёртывания проекта на Jino VPS с условием **обязательной локальной сборки Docker-образов**.
+| Слой                              | Где      | Как запускается                                            |
+| --------------------------------- | -------- | ---------------------------------------------------------- |
+| `db` (PostgreSQL 16)              | Docker   | compose-сервис, порты наружу не пробрасываются             |
+| `migrate` (Prisma migrate + seed) | Docker   | одноразовый compose-сервис, `restart: "no"`                |
+| `app` (Next.js standalone)        | Docker   | compose-сервис на `127.0.0.1:3000` — наружу не торчит      |
+| nginx + certbot                   | Хост VPS | systemd; принимает 80/443 и проксирует на `127.0.0.1:3000` |
 
-Текущая целевая конфигурация в `docker/docker-compose.yml` — `db + migrate + app` (PostgreSQL + Prisma migrate/seed + Next.js standalone). **nginx в Docker-стеке не используется** — он запускается **отдельно на хосте Jino VPS** (systemd), сертификаты Let's Encrypt выпускает certbot на хосте.
+```
+Интернет ──▶ nginx :80/:443 ──▶ 127.0.0.1:3000 ──▶ app (Next.js standalone)
+             (TLS Let's Encrypt)                     │
+                                                     └──▶ db (PostgreSQL)
+```
 
-## 2. Варианты упаковки проекта
+nginx в `docker/docker-compose.yml` **не участвует** — он ставится и настраивается на хосте отдельно (раздел 6). Разделение нужно потому, что `app` опубликован только на loopback:
 
-Есть два варианта отправки проекта на сервер. Рекомендуется **Вариант 2**.
+```yaml
+# docker/docker-compose.yml
+ports:
+  - "127.0.0.1:3000:3000"
+```
 
-| Критерий                            | Вариант 1. Только исходники (`.tar.gz`)                                                       | Вариант 2. Собранные образы + конфиги (рекомендуемый)                                   |
-| ----------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **Соответствует «сборка локально»** | Частично. При `docker compose up --build` возможна повторная сборка (зависит от кэша Docker). | **Да.** Образы собраны локально, на сервере выполняются только `docker load` и `up -d`. |
-| **Объём архива**                    | Меньше (только исходный код).                                                                 | Чуть больше (Docker-образы в `.tar`).                                                   |
-| **Скорость развёртывания**          | Средняя (возможна сборка на сервере).                                                         | **Быстрее** (только загрузка образов).                                                  |
-| **Предсказуемость/идентичность**    | Возможны отличия окружения сборки.                                                            | **Максимально предсказуемо** (тот же образ, что был собран локально).                   |
-| **Риск OOM на VPS (2 ГБ)**          | Есть риск, если вдруг пойдёт билд.                                                            | **Минимальный** (билдов на сервере нет).                                                |
+Разница между вариантами доставки — только в том, **что именно отправляется на сервер** (собранные образы или исходники). Шаги 6 (nginx), 7 (обновление) и 8 (чек-лист) одинаковы для обоих.
 
-**Рекомендация:** использовать **Вариант 2**.
+---
 
-## 3. Что упаковывать, а что исключать
+## 2. Предварительные требования (общие для обоих вариантов)
 
-### При упаковке исходников (Вариант 1)
+| Требование                                        | Как проверить                                 |
+| ------------------------------------------------- | --------------------------------------------- |
+| Ubuntu/Debian с systemd                           | `systemctl --version`                         |
+| Docker Engine + Compose plugin                    | `docker version && docker compose version`    |
+| SSH-доступ и `scp` с локальной машины             | `ssh user@<IP_JINO>`                          |
+| A-записи на `ababkov-ao.ru` и `www.ababkov-ao.ru` | `nslookup ababkov-ao.ru` → совпадает с IP VPS |
+| Порты 80 и 443 открыты                            | `ufw status` / панель Jino                    |
+| nginx + certbot                                   | `apt update && apt install -y nginx certbot`  |
+| Каталог `~/portfolio` и `.env` в нём              | `chmod 600 ~/portfolio/.env`                  |
 
-**Исключить (не упаковывать):**
+> **Имя compose-проекта** берётся из имени каталога с compose-файлом, то есть из `docker` → образы называются `docker-app` и `docker-migrate`, контейнеры — `docker-app-1`. Если каталог переименовать, Compose начнёт ожидать другие теги образов, и `docker load` перестанет их находить. Проверить ожидаемые имена: `docker compose --env-file .env -f docker/docker-compose.yml config --images`.
 
-- `node_modules/` — установится при сборке
-- `.next/` — генерируется при `next build`
-- `.git/`, `.gitignore`
-- `.env`, `.env.local`, `.env.*.local` — **секреты, ни в коем случае не отправлять в архиве**
-- `*.tar`, `*.tar.gz` — старые архивы
-- `uploads/` — том Docker (`uploads:/app/public/uploads`), пользовательские файлы должны храниться только на сервере
-- `coverage/`, `.turbo/`, `.vscode/`, `.idea/`, `*.log` — временные/служебные файлы
+`.env` **никогда не переносится в архиве** — на сервере он создаётся вручную из `.env.example`, права `chmod 600`.
 
-**Обязательно упаковать:**
+---
 
-- `docker/` (включая `docker-compose.yml`, `docker/Dockerfile` и `docker/nginx/portfolio.conf`)
-- `prisma/`
-- `src/`, `public/`
-- `package.json`, `package-lock.json`
-- `next.config.mjs`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`, `tailwind.config.ts`, `components.json`
-- `README.md` (опционально)
+## 3. Выбор варианта доставки
 
-## 4. Вариант 2 (рекомендуемый) — Docker-образы + конфиги
+| Критерий                            | Вариант 1. Только исходники (`.tar.gz`)           | Вариант 2. Готовые образы + конфиги (рекомендуемый)      |
+| ----------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| **Соответствует «сборка локально»** | Частично: `docker compose build` уходит на сервер | **Да:** сборка только локально, на сервере `load` + `up` |
+| **Объём переноса**                  | Меньше (только исходный код)                      | Больше (Docker-образы в `.tar`)                          |
+| **Скорость развёртывания**          | Средняя (сборка на сервере)                       | **Быстрее** (только загрузка образов)                    |
+| **Предсказуемость**                 | Может отличаться от локальной (окружение сборки)  | **Максимальная** (тот же образ, что собран локально)     |
+| **Риск OOM на VPS (2 ГБ)**          | Есть: сборка `sharp`/`pg`/`next build` на сервере | **Нет** (сборки на сервере не бывает)                    |
+| **Сложность**                       | Проще (один архив)                                | Два файла: архив конфигов + образы                       |
 
-### Шаг 1. Собрать Docker-образы локально
+**Рекомендация: Вариант 2** — раздел 4. Требование «сборка контейнеров локально» выполняется в нём полностью, Вариант 1 (раздел 5) нарушает его по построению.
 
-Выполняется из корня проекта `D:\JavaScript\my-portfolio\my-portfolio`.
+---
+
+## 4. Вариант 2 — готовые образы + конфиги (рекомендуемый)
+
+### 4.1. Локально (Windows)
+
+Все команды выполняются из корня проекта в Git Bash / WSL.
+
+#### Шаг 1. Собрать образы
 
 ```bash
 docker compose --env-file .env -f docker/docker-compose.yml build
-Данная команда выполнит сборку образов локально (включая multi-stage сборку Next.js). Билд Next.js происходит только локально, на сервере его не будет.
-Шаг 2. Сохранить Docker-образы (только необходимые)
-В текущем стеке используются db, migrate, app. postgres:16-alpine будет автоматически загружен с Docker Hub на сервере.
-Рекомендуется сохранить только образ app:
-docker save -o portfolio-app.tar $(docker compose --env-file .env -f docker/docker-compose.yml images -q app)
-Опционально (для полной гарантии отсутствия повторной сборки migrate):
-docker save -o portfolio-images.tar $(docker compose --env-file .env -f docker/docker-compose.yml images -q app migrate)
-Шаг 3. Упаковать ТОЛЬКО конфиги
-Создаём минимальный архив с конфигурационными файлами:
+```
+
+Собираются **оба** образа с `build:` — `docker-app` (target `runner`) и `docker-migrate` (target `migrator`). Тяжёлая multi-stage сборка Next.js целиком происходит локально.
+
+#### Шаг 2. Сохранить образы
+
+```bash
+docker save -o portfolio-images.tar \
+  $(docker compose --env-file .env -f docker/docker-compose.yml images -q app) \
+  $(docker compose --env-file .env -f docker/docker-compose.yml images -q migrate)
+```
+
+> **Оба образа обязательны.** У сервиса `migrate` в compose есть секция `build:`, поэтому без его образа `docker compose up` на сервере попытается собрать его заново — и требование «сборка локально» будет нарушено. `postgres:16-alpine` сохранять не нужно: на сервере он скачается из Docker Hub сам.
+
+#### Шаг 3. Упаковать конфиги
+
+```bash
 tar -czf portfolio-configs.tar.gz \
   docker/docker-compose.yml \
-  docker/nginx/portfolio.conf
-Важно: .env ни в коем случае не добавляем в архив. Файл .env создаётся вручную только на сервере.
-Шаг 4. Отправить файлы на Jino VPS
-С локальной машины (через scp):
-# Конфиги
-scp portfolio-configs.tar.gz user@<IP_JINO>:/home/<user>/
+  docker/Dockerfile \
+  docker/nginx/portfolio.conf \
+  .env.example
+```
 
-# Docker-образ(ы)
-scp portfolio-app.tar user@<IP_JINO>:/home/<user>/
-Шаг 5. Подготовить окружение на сервере
-Подключаемся по SSH:
+> `.env.example` кладём в архив безопасно — в нём только плейсхолдеры. Реальный `.env` не переносится никогда.
+
+#### Шаг 4. Отправить на сервер
+
+```bash
+scp portfolio-configs.tar.gz user@<IP_JINO>:/home/<user>/
+scp portfolio-images.tar     user@<IP_JINO>:/home/<user>/
+```
+
+### 4.2. На сервере
+
+#### Шаг 5. Распаковать конфиги, создать `.env`
+
+```bash
 ssh user@<IP_JINO>
 mkdir -p ~/portfolio
-cd ~/portfolio
-Распаковываем конфиги:
 tar -xzf ~/portfolio-configs.tar.gz -C ~/portfolio
-Создаём .env только на сервере:
-nano .env  # Заполнить реальными значениями из .env.example
+```
+
+Создать `.env` на основе шаблона из архива (сам `.env` в архиве нет):
+
+```bash
+cd ~/portfolio
+cp .env.example .env
+nano .env              # POSTGRES_*, DATABASE_URL, AUTH_*, SITE_URL=https://ababkov-ao.ru
 chmod 600 .env
-Шаг 6. Загрузить Docker-образы на сервер
+```
+
+#### Шаг 6. Загрузить образы
+
+```bash
 cd ~/portfolio
-docker load -i ~/portfolio-app.tar
-rm ~/portfolio-app.tar ~/portfolio-configs.tar.gz  # опционально для очистки
-Шаг 7. Запустить стек
+docker load -i ~/portfolio-images.tar
+docker compose --env-file .env -f docker/docker-compose.yml config --images   # сверить теги
+```
+
+#### Шаг 7. Запустить стек
+
+```bash
 cd ~/portfolio
-docker compose --env-file .env -f docker/docker-compose.yml up -d
-Команда запустит только сервисы db, migrate, app. nginx не поднимается в этом Docker-стеке — он настраивается на хосте отдельно (раздел 6).
-5. Вариант 1 — только исходники
-Из корня проекта:
-tar --exclude='node_modules' --exclude='.next' --exclude='.git' --exclude='.env*' --exclude='*.tar' --exclude='*.tar.gz' --exclude='coverage' --exclude='.turbo' --exclude='.vscode' --exclude='.idea' --exclude='*.log' -czf portfolio-src.tar.gz .
-Отправить архив на сервер, распаковать, затем на сервере выполнить:
+docker compose --env-file .env -f docker/docker-compose.yml up -d --no-build
+docker compose -f docker/docker-compose.yml ps          # db и app — Up (healthy)
+docker compose -f docker/docker-compose.yml logs migrate # «Seed completed: …»
+```
+
+Флаг `--no-build` — страховка: если образ почему-то не найден, compose упадёт с ошибкой, а не начнёт молча собирать на сервере.
+
+Поднимутся только `db`, `migrate`, `app`. nginx настраивается отдельно — раздел 6.
+
+---
+
+## 5. Вариант 1 — только исходники
+
+Используйте, если доставлять образы неудобно (например, ограничение на размер файла при `scp`). **Нарушает требование «сборка локально»**: `docker compose build` выполняется на сервере.
+
+### 5.1. Что исключить из архива
+
+**Не упаковывать:**
+
+- `node_modules/` — установится при сборке
+- `.next/`, `tsconfig.tsbuildinfo` — генерируются при `next build`
+- `.git/`, `.gitignore`
+- `.env`, `.env.local`, `.env.*.local` — **секреты** (`.env.example` положить можно)
+- `*.tar`, `*.tar.gz` — старые архивы
+- `public/uploads/` — том Docker (`uploads:/app/public/uploads`), пользовательские файлы хранятся только на сервере
+- `coverage/`, `.turbo/`, `.vscode/`, `.idea/`, `*.log`
+
+**Обязательно упаковать:**
+
+- `docker/` — `docker-compose.yml`, `Dockerfile`, `nginx/portfolio.conf`
+- `prisma/` (включая `migrations/`, `seed.ts`, `schema.prisma`), `prisma7.config.ts`
+- `src/`, `public/` (без `uploads/`)
+- `package.json`, `package-lock.json` — lock-файл обязателен, `npm ci` иначе не отработает
+- `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`
+- `.dockerignore`, `.env.example`
+
+### 5.2. Локально: собрать архив из корня проекта и отправить
+
+```bash
+
+tar \
+  --exclude='./node_modules' \
+  --exclude='./.next' \
+  --exclude='./tsconfig.tsbuildinfo' \
+  --exclude='./.git' \
+  --exclude='./.gitignore' \
+  --exclude='./.env' \
+  --exclude='./.env.local' \
+  --exclude='./.env.*.local' \
+  --exclude='./public/uploads' \
+  --exclude='./coverage' \
+  --exclude='./.turbo' \
+  --exclude='./.vscode' \
+  --exclude='./.idea' \
+  --exclude='*.log' \
+  --exclude='*.tar' \
+  --exclude='*.tar.gz' \
+  -czf portfolio-src.tar.gz .
+
+scp portfolio-src.tar.gz user@<IP_JINO>:/home/<user>/
+```
+
+### 5.3. На сервере: собрать и запустить
+
+```bash
+ssh user@<IP_JINO>
+mkdir -p ~/portfolio
+tar -xzf ~/portfolio-src.tar.gz -C ~/portfolio
 cd ~/portfolio
+chmod 600 .env
+
 docker compose --env-file .env -f docker/docker-compose.yml build
 docker compose --env-file .env -f docker/docker-compose.yml up -d
-Обратите внимание: этот вариант не соответствует требованию «сборка контейнеров локально», т.к. сборка образов частично/полностью может быть выполнена на сервере.
-6. Настройка reverse-proxy на хосте (nginx + certbot)
-В целевой конфигурации nginx запускается отдельно на хосте Jino VPS (не в Docker).
+docker compose -f docker/docker-compose.yml ps
+docker compose -f docker/docker-compose.yml logs migrate
+```
 
-Причина разделения
-Сервис app в docker-compose.yml проброшен на loopback-хоста:
-ports:
-  - "127.0.0.1:3000:3000"
-Это означает, что Next.js доступен только по http://127.0.0.1:3000 на самом сервере, наружу во внешний интернет он не торчит. Reverse-proxy (nginx) принимает трафик на 80/443 и проксирует его на 127.0.0.1:3000.
+> **Риск на VPS с 2 ГБ RAM:** сборка `sharp` и `pg` требует временной памяти под `npm ci` и `next build`. Если сборка падает с OOM — добавьте своп:
+>
+> ```bash
+> sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+> sudo mkswap /swapfile && sudo swapon /swapfile
+> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+> ```
 
-Шаг 1. Установка пакетов
+### 5.4. Чем дальнейшая работа отличается от Варианта 2
+
+Только шагом доставки: вместо `docker save` → `scp` → `docker load` вы отправляете изменённые исходники и запускаете `docker compose build` на сервере. Шаги 6, 7, 8 идентичны.
+
+---
+
+## 6. nginx + certbot на хосте VPS (общий шаг для обоих вариантов)
+
+Выполняется после того, как Docker-стек отвечает на `http://127.0.0.1:3000`.
+
+### Шаг 1. Установка пакетов
+
+```bash
 apt update && apt install -y nginx certbot
+```
 
-Шаг 2. Размещение конфига
-Готовый конфиг лежит в репозитории — docker/nginx/portfolio.conf. В нём домен ababkov-ao.ru, при необходимости заменить на свой.
+### Шаг 2. Размещение конфига
+
+Готовый конфиг — `docker/nginx/portfolio.conf`. Домен в нём `ababkov-ao.ru`; при необходимости заменить на свой в трёх местах: `server_name` в трёх `server`-блоках и путь к сертификату.
+
+```bash
 mkdir -p /var/www/certbot && chown www-data: /var/www/certbot
 cp ~/portfolio/docker/nginx/portfolio.conf /etc/nginx/sites-available/portfolio.conf
 ln -s /etc/nginx/sites-available/portfolio.conf /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
-
-Шаг 3. Выпуск сертификата (порядок важен)
-nginx не стартует, пока в конфиге есть блок :443 и нет ssl-файлов. Поэтому сначала работает только :80:
-- временно закомментировать server-блок «:443» в portfolio.conf
-- nginx -t && systemctl reload nginx
-- certbot certonly --webroot -w /var/www/certbot -d ababkov-ao.ru -d www.ababkov-ao.ru --agree-tos -m <EMAIL> --non-interactive
-- вернуть блок :443, nginx -t && systemctl reload nginx
-- systemctl enable --now certbot.timer (автопродление)
-
-Домен рабочий — ababkov-ao.ru. Сертификат покрывает и www (SAN из двух имён), но www обслуживается только редиректом 301 на apex — и по HTTP, и по HTTPS. Отдельный server-блок :443 для www обязателен: без него запрос https://www.… не найдёт подходящего server_name, получит сертификат основного домена и упрётся в ошибку несовпадения имени вместо редиректа.
-
-Ключевые директивы, которые нельзя потерять при правках
-- proxy_set_header X-Forwarded-For $remote_addr — именно перезапись, а не $proxy_add_x_forwarded_for. getClientIp() (src/lib/rate-limit.ts) берёт первое значение XFF, поэтому с append клиент подменяет свой IP и обходит rate-limit логина.
-- limit_req_zone $binary_remote_addr zone=auth_login:10m rate=5r/m + location = /api/auth/login — 5 запросов/мин на IP с burst=5 nodelay, отдаёт 429 до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому значение держится на уровне LOGIN_MAX_ATTEMPTS (src/lib/rate-limit.ts). При отладке можно временно добавить limit_req_dry_run on.
-- client_max_body_size 8m — дефолт nginx 1m обрезал бы загрузку фотографий (приложение само лимитит 5 МБ и вернуло бы JSON-ошибку 413).
-- proxy_buffering off — Next.js 16 стримит SSR-ответы, буферизация на прокси ломает инкрементальный рендеринг.
-- Security-заголовки (HSTS, CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) не дублируются: их уже отдаёт next.config.ts. add_header в nginx добавляет заголовок, а не заменяет — дубль HSTS дал бы расхождение max-age с next.config.ts.
-- server_tokens off — скрывает версию nginx (аналог -Server в Caddyfile).
-- return 301 https://ababkov-ao.ru$request_uri с литералом домена, а не $host — $host берётся из заголовка Host и мог бы утечь в Location.
-
-Проверка на сервере
-nginx -t
-curl -I http://ababkov-ao.ru              # 301 → https
-curl -I https://ababkov-ao.ru            # 200, HSTS ровно один
-curl -I http://www.ababkov-ao.ru         # 301 → https://ababkov-ao.ru
-curl -I https://www.ababkov-ao.ru        # 301 → https://ababkov-ao.ru, без ошибки TLS
-curl -s -o /dev/null -w '%{http_code}\n' https://ababkov-ao.ru/api/health   # 200
-certbot renew --dry-run                  # проверка продления
-
-Откат
-nginx не участвует в Docker-стеке и не трогает volumes. Откат: rm /etc/nginx/sites-enabled/portfolio.conf && systemctl reload nginx.
-
-7. Workflow обновления приложения
-Поскольку сборка происходит локально (Вариант 2):
-1. Внести изменения в код проекта (локально).
-2. Пересобрать только образ app:
-docker compose --env-file .env -f docker/docker-compose.yml build app
-3. Сохранить новый образ с временной меткой (удобно для отката):
-docker save -o portfolio-app-$(date +%Y%m%d-%H%M%S).tar $(docker compose --env-file .env -f docker/docker-compose.yml images -q app)
-4. Отправить .tar-файл на сервер (scp).
-5. На сервере загрузить образ: docker load -i portfolio-app-*.tar
-6. Перезапустить только app (минимальное простоя):
-cd ~/portfolio
-docker compose --env-file .env -f docker/docker-compose.yml up -d app
-7. Проверить логи: docker compose --env-file .env -f docker/docker-compose.yml logs -f app
-8. Чек-лист готовности к первому деплою
-- DNS настроен. A-записи на ababkov-ao.ru и www.ababkov-ao.ru указывают на публичный IP Jino VPS, пропагация завершена.
-- Порты открыты. На Jino VPS порты 80 и 443 открыты для входящего трафика.
-- .env создан на сервере. В ~/portfolio/.env заполнены все необходимые runtime-переменные, выставлены права chmod 600 .env.
-- Docker + Docker Compose Plugin установлены на Jino VPS.
-- Образы собраны локально (Шаг 1 Варианта 2) — без ошибок.
-- Образы и конфиги перенесены на сервер (Шаг 4), образы загружены (docker load, Шаг 6).
-- Docker-стек поднят. docker compose --env-file .env -f docker/docker-compose.yml up -d отработал успешно, все контейнеры в running.
-- nginx + certbot установлены на хосте. docker/nginx/portfolio.conf размещён в sites-available/sites-enabled, `nginx -t` проходит.
-- Сертификаты Let's Encrypt получены на ababkov-ao.ru и www.ababkov-ao.ru, certbot.timer включён, `certbot renew --dry-run` проходит.
-- Проверка HTTPS. https://ababkov-ao.ru открывается, HTTP корректно редиректит на HTTPS, http://www.ababkov-ao.ru и https://www.ababkov-ao.ru редиректят на apex без ошибки TLS, API-роуты работают, X-Forwarded-For перезаписывается nginx (rate-limit логина не обходится подменой заголовка), nginx-овский limit_req на /api/auth/login отдаёт 429 при превышении.
-- Автозапуск проверен. После перезагрузки сервера контейнеры автоматически поднимаются (restart: unless-stopped).
 ```
+
+### Шаг 3. Выпуск сертификата (порядок важен)
+
+nginx не запустится, пока в конфиге есть блоки `:443`, а ssl-файлов ещё нет. Поэтому сначала работает только `:80`:
+
+```bash
+# 1) временно закомментировать ОБА server-блока :443 в portfolio.conf
+nginx -t && systemctl reload nginx
+
+# 2) выпустить сертификат на оба имени
+certbot certonly --webroot -w /var/www/certbot \
+  -d ababkov-ao.ru -d www.ababkov-ao.ru \
+  --agree-tos -m <EMAIL> --non-interactive
+
+# 3) вернуть оба блока :443
+nginx -t && systemctl reload nginx
+
+# 4) автопродление
+systemctl enable --now certbot.timer
+systemctl list-timers | grep certbot
+```
+
+Домен рабочий — `ababkov-ao.ru`. Сертификат покрывает и `www` (SAN из двух имён), но `www` обслуживается только редиректом 301 на apex — и по HTTP, и по HTTPS. Отдельный `server`-блок `:443` для `www` обязателен: без него запрос `https://www.…` не найдёт подходящего `server_name`, получит сертификат основного домена и упрётся в ошибку несовпадения имени **вместо** редиректа.
+
+### Ключевые директивы, которые нельзя потерять при правках
+
+- `proxy_set_header X-Forwarded-For $remote_addr` — именно перезапись, а не `$proxy_add_x_forwarded_for`. `getClientIp()` в `src/lib/rate-limit.ts` берёт первое значение XFF, поэтому с append клиент подставил бы свой IP и обошёл rate-limit логина.
+- `limit_req_zone $binary_remote_addr zone=auth_login:10m rate=5r/m` + `location = /api/auth/login` — 5 запросов/мин на IP с `burst=5 nodelay`, отдаёт 429 до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому значение держится на уровне `LOGIN_MAX_ATTEMPTS` (`src/lib/rate-limit.ts`). При отладке можно временно добавить `limit_req_dry_run on`.
+- `client_max_body_size 8m` — дефолт nginx 1m обрезал бы загрузку фотографий (приложение само лимитит 5 МБ и вернуло бы JSON-ошибку 413).
+- `proxy_buffering off` — Next.js 16 стримит SSR-ответы, буферизация на прокси ломает инкрементальный рендеринг.
+- Security-заголовки (HSTS, CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) **не дублируются**: их уже отдаёт `next.config.ts`. `add_header` в nginx добавляет заголовок, а не заменяет — дубль HSTS дал бы расхождение `max-age` с `next.config.ts`.
+- `server_tokens off` — скрывает версию nginx.
+- `return 301 https://ababkov-ao.ru$request_uri` с литералом домена, а не `$host` — `$host` берётся из заголовка `Host` и мог бы утечь в `Location`.
+
+### Проверка на сервере
+
+```bash
+nginx -t                                                             # синтаксис
+curl -I http://ababkov-ao.ru                                        # 301 → https
+curl -I https://ababkov-ao.ru                                       # 200, HSTS ровно один
+curl -I http://www.ababkov-ao.ru                                    # 301 → https://ababkov-ao.ru
+curl -I https://www.ababkov-ao.ru                                   # 301 → apex, без ошибки TLS
+curl -s -o /dev/null -w '%{http_code}\n' https://ababkov-ao.ru/api/health   # 200
+certbot renew --dry-run                                             # проверка продления
+
+# XFF перезаписывается — в access log должен быть реальный IP, а не подставленный:
+curl -s -H 'X-Forwarded-For: 1.2.3.4' https://ababkov-ao.ru/api/auth/login -o /dev/null
+tail -n 5 /var/log/nginx/portfolio.access.log
+```
+
+---
+
+## 7. Обновление приложения после первого деплоя
+
+### Вариант 2 (рекомендуемый)
+
+1. Внести изменения в код локально.
+2. Пересобрать нужные образы **локально**:
+   ```bash
+   docker compose --env-file .env -f docker/docker-compose.yml build app
+   # если менялся prisma/schema.prisma — ещё и migrator:
+   docker compose --env-file .env -f docker/docker-compose.yml build migrate
+   ```
+3. Сохранить с меткой времени (удобно для отката):
+   ```bash
+   docker save -o portfolio-images-$(date +%Y%m%d-%H%M%S).tar \
+     $(docker compose --env-file .env -f docker/docker-compose.yml images -q app) \
+     $(docker compose --env-file .env -f docker/docker-compose.yml images -q migrate)
+   ```
+4. Отправить `.tar` на сервер (`scp`).
+5. На сервере загрузить и перезапустить только `app`:
+   ```bash
+   cd ~/portfolio
+   docker load -i ~/portfolio-images-*.tar
+   docker compose --env-file .env -f docker/docker-compose.yml up -d --no-build app
+   docker compose --env-file .env -f docker/docker-compose.yml logs -f app
+   ```
+
+> Если менялся `prisma/schema.prisma`, одного `--no-build app` мало: пересоберите и загрузите образ `migrate`, затем `docker compose --env-file .env -f docker/docker-compose.yml up -d --no-build --force-recreate migrate app` — иначе миграции не применятся.
+
+### Вариант 1
+
+1. Внести изменения локально, отправить только изменённые файлы (`scp` или `git`).
+2. На сервере пересобрать и перезапустить:
+   ```bash
+   cd ~/portfolio
+   docker compose --env-file .env -f docker/docker-compose.yml up -d --build app
+   ```
+
+---
+
+## 8. Чек-лист готовности к первому деплою
+
+- [ ] **DNS.** A-записи на `ababkov-ao.ru` и `www.ababkov-ao.ru` указывают на публичный IP Jino VPS, пропагация завершена.
+- [ ] **Порты.** На Jino VPS порты 80 и 443 открыты для входящего трафика.
+- [ ] **Docker.** `docker version` и `docker compose version` работают на сервере.
+- [ ] **`.env`.** В `~/portfolio/.env` заполнены все runtime-переменные, права `chmod 600`. В нём нет плейсхолдеров (`AUTH_ADMIN_PASSWORD` ≠ `replace-with-strong-password`, длина ≥ 8).
+- [ ] **Образы собраны локально** (Вариант 2) — без ошибок, оба: `docker-app` и `docker-migrate`.
+- [ ] **Файлы перенесены**, образы загружены через `docker load`, теги совпадают с `docker compose config --images`.
+- [ ] **Docker-стек поднят.** `up -d --no-build` отработал успешно, `ps` показывает `db` и `app` как `Up (healthy)`, в логах `migrate` есть `Seed completed`.
+- [ ] **nginx установлен.** `docker/nginx/portfolio.conf` размещён в `sites-available`/`sites-enabled`, `nginx -t` проходит.
+- [ ] **Сертификаты получены** на оба имени, `certbot.timer` включён, `certbot renew --dry-run` проходит.
+- [ ] **HTTPS работает.** `https://ababkov-ao.ru` открывается, HTTP редиректит на HTTPS, `www` по обоим протоколам редиректит на apex без ошибки TLS, API-роуты отвечают.
+- [ ] **Защита проверена.** `X-Forwarded-For` перезаписывается nginx (rate-limit логина не обходится подменой заголовка), nginx-овский `limit_req` на `/api/auth/login` отдаёт 429 при превышении, HSTS в ответе ровно один.
+- [ ] **Автозапуск.** После перезагрузки сервера контейнеры поднимаются сами (`restart: unless-stopped`), nginx — через systemd.
+
+---
+
+## 9. Откат
+
+nginx не участвует в Docker-стеке и не трогает volumes, поэтому откатывается независимо:
+
+```bash
+rm /etc/nginx/sites-enabled/portfolio.conf
+systemctl reload nginx
+```
+
+Откат образа (Вариант 2) — загрузить предыдущий `.tar` и перезапустить `app`:
+
+```bash
+cd ~/portfolio
+docker load -i ~/portfolio-images-20260101-120000.tar
+docker compose --env-file .env -f docker/docker-compose.yml up -d --no-build app
+```
+
+Данные (БД, загруженные файлы) лежат в volumes `db-data` и `uploads` и не затрагиваются ни одним из откатов.
