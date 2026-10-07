@@ -3,7 +3,7 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { getProfile } from "@/lib/api";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import CookieConsent from "@/components/ui/CookieConsent";
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
+    metadataBase: new URL(SITE_URL),
     title: {
       default: title,
       template: `%s | ${title}`,

@@ -44,6 +44,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        NEXT_PUBLIC_METRIKA_ID: ${NEXT_PUBLIC_METRIKA_ID:-}
+        SITE_URL: ${SITE_URL:-}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"

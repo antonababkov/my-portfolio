@@ -2,7 +2,7 @@ import AboutSection from "@/components/home/AboutSection";
 import AboutExtraSection from "@/components/home/AboutExtraSection";
 import ProjectsSection from "@/components/home/ProjectsSection";
 import { getProfile, getProjects } from "@/lib/api";
-import { SOCIALS } from "@/lib/constants";
+import { SITE_URL, SOCIALS } from "@/lib/constants";
 import type { Profile, Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function Home() {
     );
   }
 
-  const siteUrl = process.env.SITE_URL || "http://localhost:3000";
+  const siteUrl = SITE_URL;
   const personJsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
