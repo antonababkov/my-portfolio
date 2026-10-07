@@ -12,9 +12,14 @@ import {
 import { assertSameOrigin } from "@/lib/csrf";
 
 const LoginSchema = z.object({
-  login: z.string().min(1, "Введите логин"),
-  password: z.string().min(1, "Введите пароль"),
+  login: z.string().min(1, "Введите логин").max(100),
+  password: z.string().min(1, "Введите пароль").max(200),
 });
+
+// Хеш случайной строки (cost 10): используется как заглушка, чтобы
+// отсутствие пользователя и неверный пароль занимали сопоставимое время
+// (защита от тайминг-перечисления).
+const DUMMY_HASH = "$2b$10$bhADXpCrTon4Rw5SdOgVNOYrzTqDKWqfBzbkWa0uckkzxXaBsA6pq";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -46,15 +51,15 @@ export async function POST(request: Request) {
 
   const admin = await db.admin.findUnique({ where: { login } });
 
-  if (!admin) {
-    return NextResponse.json(
-      { error: "Неверный логин или пароль" },
-      { status: 401 }
-    );
+  let passwordOk = false;
+  if (admin) {
+    passwordOk = await bcrypt.compare(password, admin.password);
+  } else {
+    // Выравнивание времени: сравниваем с фиктивным хешем.
+    await bcrypt.compare(password, DUMMY_HASH);
   }
 
-  const passwordOk = await bcrypt.compare(password, admin.password);
-  if (!passwordOk) {
+  if (!admin || !passwordOk) {
     return NextResponse.json(
       { error: "Неверный логин или пароль" },
       { status: 401 }
@@ -63,11 +68,15 @@ export async function POST(request: Request) {
 
   const token = signToken({ login: admin.login, id: admin.id });
 
+  const isSecure =
+    process.env.NODE_ENV === "production" ||
+    request.headers.get("x-forwarded-proto") === "https";
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set(AUTH_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecure,
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

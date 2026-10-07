@@ -56,16 +56,30 @@ export function rateLimit(
 
 /** Извлекает клиентский IP из заголовков (за reverse-proxy nginx). */
 export function getClientIp(request: Request): string {
+  // Доверяем только заголовку, который перезаписывается нашим nginx
+  // (proxy_set_header X-Real-IP $remote_addr).
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  // Если отработал другой прокси — берём ПОСЛЕДНИЙ hop X-Forwarded-For:
+  // его добавляет ближайший к приложению прокси, а подделать можно
+  // только значения слева.
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
-    // берём первый адрес — исходный клиент
-    return forwarded.split(",")[0].trim();
+    const hops = forwarded
+      .split(",")
+      .map((hop) => hop.trim())
+      .filter(Boolean);
+    if (hops.length > 0) {
+      return hops[hops.length - 1];
+    }
   }
-  return (
-    request.headers.get("x-real-ip") ||
-    request.headers.get("x-forwarded-host") ||
-    "unknown"
-  );
+
+  // Нет обрамляющего прокси: отдельным клиентам не различаем, но
+  // лимит всё равно действует (общий бакет). Порт не публикуется наружу.
+  return "unknown";
 }
 
 /** Максимальное число неуспешных попыток входа на IP. */

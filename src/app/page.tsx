@@ -43,7 +43,9 @@ export default async function Home() {
     <main id="main" className="home-main">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <AboutSection profile={profile} />
       <AboutExtraSection profile={profile} />

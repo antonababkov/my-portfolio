@@ -3,9 +3,10 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
+import { ProjectCreateSchema } from "@/lib/validation";
 
 const ReorderSchema = z.object({
-  items: z.array(z.object({ id: z.string(), order: z.number().int() })),
+  items: z.array(z.object({ id: z.string().cuid(), order: z.number().int() })).max(200),
 });
 
 export async function GET() {
@@ -27,17 +28,15 @@ export async function POST(request: Request) {
     return csrf;
   }
 
-  const body: { title?: string; description?: string; link?: string } =
-    await request.json();
-
-  const { title, description, link } = body;
-
-  if (!title || !description) {
+  const parsed = ProjectCreateSchema.safeParse(await request.json());
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Fields title, description are required" },
+      { error: parsed.error.issues[0]?.message || "Некорректные данные" },
       { status: 400 }
     );
   }
+
+  const { title, description, link } = parsed.data;
 
   const last = await db.project.findFirst({
     orderBy: { order: "desc" },
@@ -74,9 +73,11 @@ export async function PUT(request: Request) {
     );
   }
 
-  for (const { id, order } of parsed.data.items) {
-    await db.project.update({ where: { id }, data: { order } });
-  }
+  await db.$transaction(
+    parsed.data.items.map(({ id, order }) =>
+      db.project.update({ where: { id }, data: { order } })
+    )
+  );
 
   return NextResponse.json({ ok: true });
 }

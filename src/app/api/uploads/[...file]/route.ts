@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { uploadsDir } from "@/lib/uploads";
 
 const MIME_BY_EXT: Record<string, string> = {
   avif: "image/avif",
@@ -9,13 +10,10 @@ const MIME_BY_EXT: Record<string, string> = {
   jpeg: "image/jpeg",
   jpg: "image/jpeg",
   png: "image/png",
-  svg: "image/svg+xml",
   webp: "image/webp",
 };
 
 const SAFE_NAME = /^[A-Za-z0-9._-]+$/;
-
-const uploadsDir = path.join(process.cwd(), "public", "uploads");
 
 function mimeByFileName(name: string): string {
   const ext = path.extname(name).slice(1).toLowerCase();

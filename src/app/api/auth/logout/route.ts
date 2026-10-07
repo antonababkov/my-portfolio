@@ -8,10 +8,15 @@ export async function POST(request: Request) {
     return csrf;
   }
 
+  const isSecure =
+    process.env.NODE_ENV === "production" ||
+    request.headers.get("x-forwarded-proto") === "https";
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set(AUTH_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
+    secure: isSecure,
     path: "/",
     maxAge: 0,
   });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
+import { ProjectUpdateSchema } from "@/lib/validation";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -14,21 +15,21 @@ export async function PUT(request: Request, { params }: Params) {
     return csrf;
   }
   const { id } = await params;
-  const body: { title?: string; description?: string; link?: string } =
-    await request.json();
+
+  const parsed = ProjectUpdateSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message || "Некорректные данные" },
+      { status: 400 }
+    );
+  }
 
   const existing = await db.project.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  const { title, description, link } = body;
-  if (title === undefined && description === undefined && link === undefined) {
-    return NextResponse.json(
-      { error: "No fields to update provided" },
-      { status: 400 }
-    );
-  }
+  const { title, description, link } = parsed.data;
 
   const project = await db.project.update({
     where: { id },
