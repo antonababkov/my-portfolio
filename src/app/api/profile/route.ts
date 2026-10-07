@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
+import { ProfileUpdateSchema } from "@/lib/validation";
 
 export async function GET() {
   const profile = await db.profile.findFirst({
@@ -25,66 +26,30 @@ export async function PUT(request: Request) {
     return csrf;
   }
 
-  const body: {
-    fullName?: string;
-    position?: string;
-    description?: string;
-    sliderAutoPlay?: boolean;
-    siteTitle?: string;
-    siteDescription?: string;
-    email?: string;
-    phone?: string;
-    aboutExtraTitle?: string;
-    aboutExtra?: string;
-    aboutExtraVisible?: boolean;
-    privacyPolicy?: string;
-    personalDataPolicy?: string;
-    operatorAddress?: string;
-  } = await request.json();
-
-  const { fullName, position, description, sliderAutoPlay, siteTitle, siteDescription, email, phone, aboutExtraTitle, aboutExtra, aboutExtraVisible, privacyPolicy, personalDataPolicy, operatorAddress } = body;
-
-  if (!fullName || !position || !description) {
+  const parsed = ProfileUpdateSchema.safeParse(await request.json());
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Fields fullName, position, description are required" },
+      { error: parsed.error.issues[0]?.message || "Некорректные данные" },
       { status: 400 }
     );
   }
 
-  if (sliderAutoPlay !== undefined && typeof sliderAutoPlay !== "boolean") {
-    return NextResponse.json(
-      { error: "Field sliderAutoPlay must be a boolean" },
-      { status: 400 }
-    );
-  }
-
-  if (aboutExtraVisible !== undefined && typeof aboutExtraVisible !== "boolean") {
-    return NextResponse.json(
-      { error: "Field aboutExtraVisible must be a boolean" },
-      { status: 400 }
-    );
-  }
-
-  if (privacyPolicy !== undefined && typeof privacyPolicy !== "string") {
-    return NextResponse.json(
-      { error: "Field privacyPolicy must be a string" },
-      { status: 400 }
-    );
-  }
-
-  if (personalDataPolicy !== undefined && typeof personalDataPolicy !== "string") {
-    return NextResponse.json(
-      { error: "Field personalDataPolicy must be a string" },
-      { status: 400 }
-    );
-  }
-
-  if (operatorAddress !== undefined && typeof operatorAddress !== "string") {
-    return NextResponse.json(
-      { error: "Field operatorAddress must be a string" },
-      { status: 400 }
-    );
-  }
+  const {
+    fullName,
+    position,
+    description,
+    sliderAutoPlay,
+    siteTitle,
+    siteDescription,
+    email,
+    phone,
+    aboutExtraTitle,
+    aboutExtra,
+    aboutExtraVisible,
+    privacyPolicy,
+    personalDataPolicy,
+    operatorAddress,
+  } = parsed.data;
 
   let profile = await db.profile.findFirst();
   if (!profile) {

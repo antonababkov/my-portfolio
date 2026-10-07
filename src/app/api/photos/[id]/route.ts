@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { unlink } from "node:fs/promises";
-import path from "node:path";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { assertSameOrigin } from "@/lib/csrf";
+import { filePathFromUploadUrl } from "@/lib/uploads";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -76,11 +76,13 @@ export async function DELETE(request: Request, { params }: Params) {
 
   await db.photo.delete({ where: { id } });
 
-  try {
-    const filePath = path.join(process.cwd(), "public", existing.url);
-    await unlink(filePath);
-  } catch {
-    // Файл может отсутствовать — это не ошибка удаления записи.
+  const filePath = filePathFromUploadUrl(existing.url);
+  if (filePath) {
+    try {
+      await unlink(filePath);
+    } catch {
+      // Файл может отсутствовать — это не ошибка удаления записи.
+    }
   }
 
   return NextResponse.json({ ok: true });

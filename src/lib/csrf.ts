@@ -27,11 +27,23 @@ function getAllowedOrigins(request: Request, siteUrl: string | undefined): strin
   if (host) {
     const proto = process.env.NODE_ENV === "production" ? "https" : "http";
     origins.add(`${proto}://${host}`);
-    // localhost тоже допустим на время разработки
-    origins.add(`http://${host}`);
+    // http://<host> допустим в проде только для loopback: локальный тест
+    // прод-сборки (docker на localhost) без TLS, а over-http запросы
+    // к реальному домену отбрасываются.
+    if (process.env.NODE_ENV !== "production" || isLoopbackHost(host)) {
+      origins.add(`http://${host}`);
+    }
   }
 
   return [...origins];
+}
+
+/** localhost / 127.0.0.1 / [::1] (с любым портом). */
+function isLoopbackHost(host: string): boolean {
+  const hostname = host.startsWith("[")
+    ? host.slice(1, host.indexOf("]"))
+    : host.split(":")[0];
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
 /**

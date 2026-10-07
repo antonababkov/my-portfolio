@@ -1,24 +1,5 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV !== "production";
-
-const csp = [
-  "default-src 'self'",
-  // next/font инлайнит стили шрифтов через <style>
-  "style-src 'self' 'unsafe-inline'",
-  // theme-init (inline) и JSON-LD инлайнятся напрямую в HTML
-  // unsafe-eval нужен React в dev-режиме (hot-reload, стек-трейсы)
-  // Яндекс.Метрика подключается только после согласия пользователя
-  `script-src 'self' 'unsafe-inline' https://mc.yandex.ru https://yastatic.net${isDev ? " 'unsafe-eval'" : ""}`,
-
-  "img-src 'self' data: blob: https://mc.yandex.ru",
-  "font-src 'self'",
-  "connect-src 'self' https://mc.yandex.ru",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join("; ");
-
 const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
@@ -48,7 +29,6 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
-          { key: "Content-Security-Policy", value: csp },
         ],
       },
     ];
