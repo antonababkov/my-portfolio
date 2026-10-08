@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/session";
 
 export default async function PanelLayout({
   children,

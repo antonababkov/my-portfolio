@@ -6,6 +6,11 @@ import { PrismaClient } from "../src/generated/prisma/client";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+// Cost bcrypt для хеша пароля админа. Держите в синхроне с DUMMY_HASH
+// в src/app/api/auth/login/route.ts — иначе сломается выравнивание
+// времени ответа на «пользователь есть/нет».
+const BCRYPT_COST = 12;
+
 async function main() {
   const profile = await prisma.profile.upsert({
     where: { id: "profile-default" },
@@ -42,14 +47,35 @@ async function main() {
     );
   }
 
-  await prisma.admin.upsert({
+  const existingAdmin = await prisma.admin.findUnique({
     where: { login: adminLogin },
-    update: {},
-    create: {
-      login: adminLogin,
-      password: await bcrypt.hash(adminPassword, 10),
-    },
   });
+
+  if (existingAdmin) {
+    // Повышаем cost хеша, если он ниже целевого (админ создан раньше,
+    // например со cost 10). AUTH_ADMIN_PASSWORD из .env — источник истины
+    // для учётных данных (см. README), поэтому замена хеша безопасна.
+    // При cost >= BCRYPT_COST пароль не перезаписываем — чужие ручные
+    // изменения сохраняются.
+    const costMatch = /^\$2[aby]\$(\d+)\$/.exec(existingAdmin.password);
+    const currentCost = costMatch ? Number(costMatch[1]) : 0;
+    if (currentCost < BCRYPT_COST) {
+      await prisma.admin.update({
+        where: { id: existingAdmin.id },
+        data: { password: await bcrypt.hash(adminPassword, BCRYPT_COST) },
+      });
+      console.log(
+        `Admin hash upgraded: cost ${currentCost} -> ${BCRYPT_COST}`
+      );
+    }
+  } else {
+    await prisma.admin.create({
+      data: {
+        login: adminLogin,
+        password: await bcrypt.hash(adminPassword, BCRYPT_COST),
+      },
+    });
+  }
 
   console.log("Seed completed:", profile.fullName);
 }

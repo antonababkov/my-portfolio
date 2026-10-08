@@ -1,8 +1,12 @@
 import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 
 export const AUTH_COOKIE = "auth_token";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 дней
+
+// iss/aud: токен, выписанный для других целей (или под чужим секретом
+// с совпадающим алгоритмом), отвергается при верификации.
+const ISSUER = "my-portfolio";
+const AUDIENCE = "portfolio-admin";
 
 function getSecret(): string {
   const secret = process.env.AUTH_SECRET;
@@ -30,6 +34,8 @@ export function signToken(payload: AuthPayload): string {
   return jwt.sign(payload, getSecret(), {
     algorithm: "HS256",
     expiresIn: SESSION_MAX_AGE,
+    issuer: ISSUER,
+    audience: AUDIENCE,
   });
 }
 
@@ -41,18 +47,13 @@ export function verifyToken(
   try {
     const decoded = jwt.verify(token, getSecret(), {
       algorithms: ["HS256"],
+      issuer: ISSUER,
+      audience: AUDIENCE,
     });
     return decoded as AuthPayload;
   } catch {
     return null;
   }
-}
-
-/** Получить payload текущего администратора из cookie (серверные компоненты/роуты). */
-export async function getSessionUser(): Promise<AuthPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE)?.value;
-  return verifyToken(token);
 }
 
 /** Unauthorized-ответ для защищённых API-роутов. */

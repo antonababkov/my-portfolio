@@ -2,6 +2,9 @@
 
 export const METRIKA_ID = process.env.NEXT_PUBLIC_METRIKA_ID?.trim() ?? "";
 
+/** Базовый URL сайта без завершающих слэшей: SITE_URL="https://site/" не даёт //path. */
+export const SITE_URL = (process.env.SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 // Контакты и соцсети. Временное решение для этапа «Footer»:
 // в дальнейшем эти данные будут редактироваться из админки и храниться в БД.
 export const CONTACTS = {

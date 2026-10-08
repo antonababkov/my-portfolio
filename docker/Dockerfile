@@ -13,6 +13,13 @@ RUN npm ci
 # ---------- 2. Сборка ----------
 FROM node:22-slim AS builder
 WORKDIR /app
+# NEXT_PUBLIC_* вшивается в клиентские бандлы на этапе сборки,
+# поэтому пробрасывается из .env через build-args (compose).
+# SITE_URL нужен при сборке для пререндера статики (robots/sitemap).
+ARG NEXT_PUBLIC_METRIKA_ID=""
+ARG SITE_URL=""
+ENV NEXT_PUBLIC_METRIKA_ID=${NEXT_PUBLIC_METRIKA_ID}
+ENV SITE_URL=${SITE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1

@@ -22,17 +22,29 @@ function getAllowedOrigins(request: Request, siteUrl: string | undefined): strin
     }
   }
 
-  // Для локальной разработки и когда SITE_URL не задан — хост по умолчанию
   const host = request.headers.get("host");
-  if (host) {
-    const proto = process.env.NODE_ENV === "production" ? "https" : "http";
-    origins.add(`${proto}://${host}`);
-    // http://<host> допустим в проде только для loopback: локальный тест
-    // прод-сборки (docker на localhost) без TLS, а over-http запросы
-    // к реальному домену отбрасываются.
-    if (process.env.NODE_ENV !== "production" || isLoopbackHost(host)) {
+
+  if (process.env.NODE_ENV !== "production") {
+    // Разработка: любой локальный хост.
+    if (host) {
       origins.add(`http://${host}`);
     }
+    return [...origins];
+  }
+
+  // Прод: доверяем ТОЛЬКО origin из SITE_URL. Заголовок Host берётся из
+  // клиентского запроса (nginx проксирует его как есть), поэтому origin,
+  // вычисленный из него, атакуем: при прямом доступе к приложению можно
+  // подставить Host и Origin одновременно и обойти CSRF-проверку.
+  // Если SITE_URL не задан/некорректен — список пуст и все мутирующие
+  // запросы получают 403 (fail closed, а не open).
+  //
+  // Единственное исключение — loopback: локальный тест прод-сборки
+  // (docker на localhost) без TLS; over-http запросы к реальному домену
+  // так не проходят, т.к. их Host не loopback.
+  if (host && isLoopbackHost(host)) {
+    origins.add(`https://${host}`);
+    origins.add(`http://${host}`);
   }
 
   return [...origins];

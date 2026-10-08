@@ -18,7 +18,12 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://mc.yandex.ru",
     "font-src 'self'",
-    "connect-src 'self' https://mc.yandex.ru",
+    // wss:// — отдельный scheme, https://mc.yandex.ru его не покрывает
+    // (Метрика открывает WebSocket solid.ws).
+    "connect-src 'self' https://mc.yandex.ru wss://mc.yandex.ru",
+    // Метрика встраивает iframe с mc.yandex.ru; без frame-src берётся
+    // fallback default-src 'self' и фрейм блокируется.
+    "frame-src 'self' https://mc.yandex.ru",
     "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'self'",

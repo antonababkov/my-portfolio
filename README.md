@@ -6,14 +6,14 @@
 
 ## Стек
 
-| Слой               | Технологии                                                                   |
-| ------------------ | ---------------------------------------------------------------------------- |
-| Frontend           | Next.js 16.3.4 (App Router, Turbopack, standalone), React 19.2.8, SCSS       |
-| Backend / API      | Next.js Route Handlers, zod-валидация                                        |
-| ORM                | Prisma 7 (`prisma-client` + `@prisma/adapter-pg`) + PostgreSQL 16            |
-| Авторизация        | JWT (httpOnly-cookie) + bcryptjs                                             |
-| Файлы              | `sharp`, загрузка в `/uploads`, immutable Cache-Control                      |
-| Dev-инфраструктура | TypeScript 5, ESLint 9, Autoprefixer                                         |
+| Слой               | Технологии                                                                      |
+| ------------------ | ------------------------------------------------------------------------------- |
+| Frontend           | Next.js 16.3.4 (App Router, Turbopack, standalone), React 19.2.8, SCSS          |
+| Backend / API      | Next.js Route Handlers, zod-валидация                                           |
+| ORM                | Prisma 7 (`prisma-client` + `@prisma/adapter-pg`) + PostgreSQL 16               |
+| Авторизация        | JWT (httpOnly-cookie) + bcryptjs                                                |
+| Файлы              | `sharp`, загрузка в `/uploads`, immutable Cache-Control                         |
+| Dev-инфраструктура | TypeScript 5, ESLint 9, Autoprefixer                                            |
 | Деплой             | Docker multi-stage + docker-compose (db / migrate / app), nginx + certbot (TLS) |
 
 ---
@@ -184,8 +184,8 @@ certbot renew --dry-run                  # проверка продления
 | `docker compose -f docker/docker-compose.yml logs migrate`                                     | Проверить, что миграции и сид применились (`Seed completed: …`)                                   |
 | `docker compose -f docker/docker-compose.yml ps`                                               | Статус контейнеров (`Up`, `Exit`, `Healthy`)                                                      |
 | `docker compose -f docker/docker-compose.yml restart app`                                      | Перезапуск одного сервиса без остановки остальных                                                 |
-| `docker compose -f docker/docker-compose.yml stop`                                             | Остановить контейнеры (сохраняет их, данные и volumes нетронуты)                                  |
-| `docker compose -f docker/docker-compose.yml start`                                            | Запустить остановленный стек сразу (`stop` → `start` быстрее, чем `up`)                           |
+| `docker compose --env-file .env -f docker/docker-compose.yml stop`                             | Остановить контейнеры (сохраняет их, данные и volumes нетронуты)                                  |
+| `docker compose --env-file .env -f docker/docker-compose.yml start`                            | Запустить остановленный стек сразу (`stop` → `start` быстрее, чем `up`)                           |
 | `docker compose -f docker/docker-compose.yml down`                                             | Полностью остановить и удалить контейнеры + сеть. **Volumes (БД и uploads) сохраняются**          |
 | `docker compose --env-file .env -f docker/docker-compose.yml build --no-cache app`             | Принудительная пересборка без кэша (если Docker отдаёт устаревший слой после правок)              |
 | `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate`                 | Запустить сервис миграций вручную: `prisma migrate deploy` + seed                                 |
@@ -322,10 +322,10 @@ Multi-stage сборка:
 - **`migrate` падает с ошибкой про `AUTH_ADMIN_PASSWORD`** — сид с 2026-09 валидирует пароль (≥8 символов, не плейсхолдер, не `admin123`). Задайте нормальный пароль в `.env` и перезапустите: `docker compose --env-file .env -f docker/docker-compose.yml up -d --force-recreate migrate`.
 - **`docker compose up` не стартует с сообщением про `AUTH_ADMIN_LOGIN/PASSWORD required`** — переменные админа больше не имеют дефолтов; добавьте их в `.env` (см. `.env.example`).
 - **`migrate` падает с `P1000: Authentication failed for <user>`** — пароль в volume `db-data` не совпадает с `POSTGRES_PASSWORD` из `.env` (пароль задаётся только при первом создании volume). Два варианта:
-  - *Без потери данных:* синхронизировать пароль прямо в БД:
+  - _Без потери данных:_ синхронизировать пароль прямо в БД:
     `docker compose --env-file .env -f docker/docker-compose.yml exec db psql -U $POSTGRES_USER -d $POSTGRES_DB -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';"`
     (Windows PowerShell: `%POSTGRES_USER%`/`%POSTGRES_PASSWORD%`). Затем перезапустить цепочку: `docker compose --env-file .env -f docker/docker-compose.yml up -d --force-recreate migrate app`.
-  - *Полный сброс (данные БД и uploads удаляются):* `docker compose --env-file .env -f docker/docker-compose.yml down -v`, затем `up -d --build`.
+  - _Полный сброс (данные БД и uploads удаляются):_ `docker compose --env-file .env -f docker/docker-compose.yml down -v`, затем `up -d --build`.
 - **`docker compose ps` показывает `(unhealthy)` для `app`** — проба `GET /api/health` не отвечает. Смотрите `docker compose logs app`: если приложение долго стартует (первые миграции/seed), это нормально в течение `start_period: 40s`; при повторе — проверьте логи и порт 3000. Если приложение отвечает снаружи, но healthcheck падает — у standalone-Next сервер слушает не `127.0.0.1`: Docker подставляет env `HOSTNAME` (равный IP/ID контейнера), и `server.js` берёт его как адрес бинда. В compose-файле это уже учтено (`HOSTNAME: "0.0.0.0"` у сервиса `app`); при запуске вне compose задайте `HOSTNAME` явно.
 - **Смена пароля админа** не применяется после повторного запуска — сид не перезаписывает существующего админа. Обновите пароль в БД или пересоздайте стек с чистыми volumes: `docker compose down -v`.
 - **Не применяются изменения при `up --build`** — убедитесь, что Docker-кэш не выдаёт старый слой: используйте `docker compose build --no-cache` при сомнениях.
