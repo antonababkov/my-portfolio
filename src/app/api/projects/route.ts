@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { ProjectCreateSchema } from "@/lib/validation";
+import { readJson } from "@/lib/body";
 
 const ReorderSchema = z.object({
   items: z.array(z.object({ id: z.string().cuid(), order: z.number().int() })).max(200),
@@ -28,7 +29,12 @@ export async function POST(request: Request) {
     return csrf;
   }
 
-  const parsed = ProjectCreateSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = ProjectCreateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },
@@ -65,7 +71,12 @@ export async function PUT(request: Request) {
     return csrf;
   }
 
-  const parsed = ReorderSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = ReorderSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },

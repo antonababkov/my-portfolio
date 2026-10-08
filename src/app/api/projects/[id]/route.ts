@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { ProjectUpdateSchema } from "@/lib/validation";
+import { readJson } from "@/lib/body";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -16,7 +17,12 @@ export async function PUT(request: Request, { params }: Params) {
   }
   const { id } = await params;
 
-  const parsed = ProjectUpdateSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = ProjectUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { UPLOAD_URL_PATTERN } from "@/lib/uploads";
+import { readJson } from "@/lib/body";
 
 const AttachSchema = z.object({
   url: z.string().regex(UPLOAD_URL_PATTERN, "Некорректный url файла"),
@@ -30,7 +31,12 @@ export async function POST(request: Request) {
     return csrf;
   }
 
-  const parsed = AttachSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = AttachSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },
@@ -90,7 +96,12 @@ export async function PUT(request: Request) {
     return csrf;
   }
 
-  const parsed = ReorderSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = ReorderSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },

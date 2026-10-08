@@ -18,7 +18,10 @@ function readCookie(name: string): string | null {
 }
 
 function writeCookie(name: string, value: string) {
-  document.cookie = `${name}=${value}; max-age=${COOKIE_TTL}; path=/; samesite=lax`;
+  // Secure: на https кука не уходит по незащищённому HTTP (в dev на
+  // http://localhost флаг не ставим — иначе браузер её не сохранит).
+  const secure = location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${name}=${value}; max-age=${COOKIE_TTL}; path=/; samesite=lax${secure}`;
 }
 
 export function getConsent(): ConsentValue | null {

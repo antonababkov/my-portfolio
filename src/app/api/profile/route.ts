@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { ProfileUpdateSchema } from "@/lib/validation";
+import { readJson } from "@/lib/body";
 
 export async function GET() {
   const profile = await db.profile.findFirst({
@@ -26,7 +27,12 @@ export async function PUT(request: Request) {
     return csrf;
   }
 
-  const parsed = ProfileUpdateSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = ProfileUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },

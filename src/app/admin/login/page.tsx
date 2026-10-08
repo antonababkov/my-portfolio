@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/session";
 import Login from "@/components/admin/Login";
 import styles from "./login.module.scss";
 

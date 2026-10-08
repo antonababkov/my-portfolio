@@ -8,18 +8,23 @@ import {
   getClientIp,
   LOGIN_MAX_ATTEMPTS,
   LOGIN_WINDOW_MS,
+  LOGIN_GLOBAL_MAX_ATTEMPTS,
+  LOGIN_GLOBAL_WINDOW_MS,
 } from "@/lib/rate-limit";
 import { assertSameOrigin } from "@/lib/csrf";
+import { readJson } from "@/lib/body";
 
 const LoginSchema = z.object({
   login: z.string().min(1, "Введите логин").max(100),
   password: z.string().min(1, "Введите пароль").max(200),
 });
 
-// Хеш случайной строки (cost 10): используется как заглушка, чтобы
-// отсутствие пользователя и неверный пароль занимали сопоставимое время
-// (защита от тайминг-перечисления).
-const DUMMY_HASH = "$2b$10$bhADXpCrTon4Rw5SdOgVNOYrzTqDKWqfBzbkWa0uckkzxXaBsA6pq";
+// Хеш случайной строки (cost 12 — как у реальных админов в prisma/seed.ts):
+// используется как заглушка, чтобы отсутствие пользователя и неверный пароль
+// занимали сопоставимое время (защита от тайминг-перечисления). Если cost
+// заглушки отличается от cost реальных хешей, время ответа «пользователь
+// есть/нет» снова начинает различаться.
+const DUMMY_HASH = "$2b$12$l1.6sZqRKycoz8MvilbedOFmbv8htBukWubLPVakQbF3SKh2bJO2.";
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -33,12 +38,35 @@ export async function POST(request: Request) {
     );
   }
 
+  // Глобальный кап: см. src/lib/rate-limit.ts — страховка от обхода
+  // per-IP лимита подделкой заголовков IP и от распределённого перебора.
+  if (
+    !rateLimit(
+      "login:global",
+      LOGIN_GLOBAL_MAX_ATTEMPTS,
+      LOGIN_GLOBAL_WINDOW_MS
+    )
+  ) {
+    return NextResponse.json(
+      { error: "Слишком много попыток входа. Попробуйте позже." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(LOGIN_GLOBAL_WINDOW_MS / 1000) },
+      }
+    );
+  }
+
   const csrf = assertSameOrigin(request);
   if (csrf) {
     return csrf;
   }
 
-  const parsed = LoginSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = LoginSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(

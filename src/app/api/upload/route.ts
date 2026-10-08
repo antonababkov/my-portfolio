@@ -3,10 +3,11 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { uploadsDir } from "@/lib/uploads";
+import { readBodyWithLimit } from "@/lib/body";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 // Мультипарт-обёртка добавляет overhead поверх размера файла.
@@ -49,7 +50,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const formData = await request.formData();
+  // Читаем тело с жёстким лимитом потока: проверки Content-Length
+  // недостаточно — при chunked-передаче заголовка нет, и formData()
+  // буферизовал бы тело в память без верхней границы.
+  const raw = await readBodyWithLimit(request, MAX_REQUEST_SIZE);
+  if (raw instanceof NextResponse) {
+    return raw;
+  }
+
+  let formData: FormData;
+  try {
+    // Оригинальное тело уже прочитано, поэтому разбираем ограниченный
+    // буфер через синтетический Request (content-type с boundary
+    // обязателен для мультипарта).
+    const contentType = request.headers.get("content-type");
+    const boundedRequest = new Request("http://local", {
+      method: "POST",
+      headers: contentType ? { "content-type": contentType } : undefined,
+      body: new Uint8Array(raw),
+    });
+    formData = await boundedRequest.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "Некорректное содержимое формы" },
+      { status: 400 }
+    );
+  }
   const file = formData.get("file");
 
   if (!(file instanceof File)) {

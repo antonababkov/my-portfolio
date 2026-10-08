@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { unlink } from "node:fs/promises";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { getSessionUser, unauthorizedResponse } from "@/lib/auth";
+import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { filePathFromUploadUrl } from "@/lib/uploads";
+import { readJson } from "@/lib/body";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -28,7 +29,12 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Photo not found" }, { status: 404 });
   }
 
-  const parsed = PatchSchema.safeParse(await request.json());
+  const body = await readJson(request);
+  if (body instanceof NextResponse) {
+    return body;
+  }
+
+  const parsed = PatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Некорректные данные" },
