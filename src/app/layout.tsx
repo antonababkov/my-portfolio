@@ -3,7 +3,7 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
-import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
 import { getProfile } from "@/lib/api";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import CookieConsent from "@/components/ui/CookieConsent";
@@ -23,13 +23,13 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   let title = SITE_NAME;
-  let description = SITE_NAME;
+  let description = SITE_DESCRIPTION;
 
   try {
     const profile = await getProfile();
     if (profile) {
       title = profile.siteTitle || SITE_NAME;
-      description = profile.siteDescription || SITE_NAME;
+      description = profile.siteDescription || SITE_DESCRIPTION;
     }
   } catch (error) {
     console.error("Failed to load site metadata from DB:", error);

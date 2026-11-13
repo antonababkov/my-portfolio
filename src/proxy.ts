@@ -38,6 +38,7 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith("/api")) {
     const res = NextResponse.next();
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    res.headers.set("Cache-Control", "no-store");
     return res;
   }
 
@@ -53,23 +54,38 @@ export function proxy(request: NextRequest) {
   const isAuthed = Boolean(verifyToken(token));
 
   if (isAuthed) {
-    return respond(NextResponse.next({ request: { headers: requestHeaders } }), routeCsp);
+    return respond(
+      NextResponse.next({ request: { headers: requestHeaders } }),
+      routeCsp,
+      pathname.startsWith("/admin")
+    );
   }
 
   if (pathname === "/admin/login") {
-    return respond(NextResponse.next({ request: { headers: requestHeaders } }), routeCsp);
+    return respond(
+      NextResponse.next({ request: { headers: requestHeaders } }),
+      routeCsp,
+      true
+    );
   }
 
   if (pathname.startsWith("/admin")) {
     const loginUrl = new URL("/admin/login", request.url);
-    return respond(NextResponse.redirect(loginUrl), routeCsp);
+    return respond(NextResponse.redirect(loginUrl), routeCsp, true);
   }
 
   return respond(NextResponse.next({ request: { headers: requestHeaders } }), routeCsp);
 }
 
-function respond(response: NextResponse, csp: string): NextResponse {
+function respond(
+  response: NextResponse,
+  csp: string,
+  noStore = false
+): NextResponse {
   response.headers.set("Content-Security-Policy", csp);
+  if (noStore) {
+    response.headers.set("Cache-Control", "no-store");
+  }
   return response;
 }
 

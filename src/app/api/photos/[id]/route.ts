@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { unlink } from "node:fs/promises";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
-import { filePathFromUploadUrl } from "@/lib/uploads";
+import { removeUploadedFile } from "@/lib/uploads";
 import { readJson } from "@/lib/body";
 
 type Params = { params: Promise<{ id: string }> };
@@ -81,15 +80,7 @@ export async function DELETE(request: Request, { params }: Params) {
   }
 
   await db.photo.delete({ where: { id } });
-
-  const filePath = filePathFromUploadUrl(existing.url);
-  if (filePath) {
-    try {
-      await unlink(filePath);
-    } catch {
-      // Файл может отсутствовать — это не ошибка удаления записи.
-    }
-  }
+  await removeUploadedFile(existing.url);
 
   return NextResponse.json({ ok: true });
 }

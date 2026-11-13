@@ -251,7 +251,9 @@ rm -f /etc/nginx/sites-enabled/default
 nginx не запустится, пока в конфиге есть блоки `:443`, а ssl-файлов ещё нет. Поэтому сначала работает только `:80`:
 
 ```bash
-# 1) временно закомментировать ОБА server-блока :443 в portfolio.conf
+# 1) временно закомментировать ОБА server-блока :443 в portfolio.conf.
+#    В :80 остаются ACME-location и для apex, и для www — иначе редирект www
+#    увёл бы ACME-проверку на ещё не запущенный :443.
 nginx -t && systemctl reload nginx
 
 # 2) выпустить сертификат на оба имени
@@ -271,7 +273,9 @@ systemctl list-timers | grep certbot
 
 ### Ключевые директивы, которые нельзя потерять при правках
 
-- `proxy_set_header X-Forwarded-For $remote_addr` — именно перезапись, а не `$proxy_add_x_forwarded_for`. `getClientIp()` в `src/lib/rate-limit.ts` берёт первое значение XFF, поэтому с append клиент подставил бы свой IP и обошёл rate-limit логина.
+- `proxy_set_header X-Forwarded-For $remote_addr` — именно перезапись, а не `$proxy_add_x_forwarded_for`. `getClientIp()` в `src/lib/rate-limit.ts` берёт последний hop XFF, поэтому с append клиент подставил бы свой IP и обошёл rate-limit логина.
+- `listen 443 ssl http2` — совместимо с nginx < 1.25.1 (Ubuntu 22.04/24.04) и новее; директива `http2 on` требует nginx ≥ 1.25.1 и на старых версиях не стартует.
+- `access_log off` — access-логи отключены, потому что содержат IP всех посетителей; для диагностики остаются `error_log`. Учтите это при настройке fail2ban для nginx.
 - `limit_req_zone $binary_remote_addr zone=auth_login:10m rate=5r/m` + `location = /api/auth/login` — 5 запросов/мин на IP с `burst=5 nodelay`, отдаёт 429 до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому значение держится на уровне `LOGIN_MAX_ATTEMPTS` (`src/lib/rate-limit.ts`). При отладке можно временно добавить `limit_req_dry_run on`.
 - `client_max_body_size 8m` — дефолт nginx 1m обрезал бы загрузку фотографий (приложение само лимитит 5 МБ и вернуло бы JSON-ошибку 413).
 - `proxy_buffering off` — Next.js 16 стримит SSR-ответы, буферизация на прокси ломает инкрементальный рендеринг.
@@ -290,9 +294,10 @@ curl -I https://www.ababkov-ao.ru                                   # 301 → ap
 curl -s -o /dev/null -w '%{http_code}\n' https://ababkov-ao.ru/api/health   # 200
 certbot renew --dry-run                                             # проверка продления
 
-# XFF перезаписывается — в access log должен быть реальный IP, а не подставленный:
+# access-логи отключены: файла portfolio.access.log быть не должно,
+# а подставленный XFF не должен влиять на rate-limit (проверьте 429).
 curl -s -H 'X-Forwarded-For: 1.2.3.4' https://ababkov-ao.ru/api/auth/login -o /dev/null
-tail -n 5 /var/log/nginx/portfolio.access.log
+test ! -s /var/log/nginx/portfolio.access.log && echo "access log disabled"
 ```
 
 ---
@@ -348,7 +353,9 @@ tail -n 5 /var/log/nginx/portfolio.access.log
 - [ ] **nginx установлен.** `docker/nginx/portfolio.conf` размещён в `sites-available`/`sites-enabled`, `nginx -t` проходит.
 - [ ] **Сертификаты получены** на оба имени, `certbot.timer` включён, `certbot renew --dry-run` проходит.
 - [ ] **HTTPS работает.** `https://ababkov-ao.ru` открывается, HTTP редиректит на HTTPS, `www` по обоим протоколам редиректит на apex без ошибки TLS, API-роуты отвечают.
-- [ ] **Защита проверена.** `X-Forwarded-For` перезаписывается nginx (rate-limit логина не обходится подменой заголовка), nginx-овский `limit_req` на `/api/auth/login` отдаёт 429 при превышении, HSTS в ответе ровно один.
+- [ ] **Защита проверена.** `X-Forwarded-For` перезаписывается nginx (rate-limit логина не обходится подменой заголовка), nginx-овский `limit_req` на `/api/auth/login` отдаёт 429 при превышении, HSTS в ответе ровно один, access-логи отключены.
+- [ ] **Бэкапы.** Настроены регулярные `pg_dump` базы и архивирование volume `uploads`; восстановление хотя бы раз проверено на копии.
+- [ ] **Защита VPS.** UFW разрешает только 22/80/443, SSH по ключам, fail2ban для SSH, `unattended-upgrades` включён.
 - [ ] **Автозапуск.** После перезагрузки сервера контейнеры поднимаются сами (`restart: unless-stopped`), nginx — через systemd.
 
 ---

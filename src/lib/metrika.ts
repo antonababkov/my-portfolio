@@ -2,6 +2,8 @@
 
 let initialized = false;
 
+const METRIKA_SCRIPT_SELECTOR = 'script[src*="mc.yandex.ru/metrika"]';
+
 type YmOptions = {
   id: string;
   defer?: boolean;
@@ -22,7 +24,7 @@ declare global {
 
 function injectScript() {
   const existing = document.querySelector<HTMLScriptElement>(
-    'script[src="https://mc.yandex.ru/metrika/tag.js"]',
+    METRIKA_SCRIPT_SELECTOR,
   );
   if (existing) return;
 
@@ -31,6 +33,28 @@ function injectScript() {
   script.defer = true;
   script.async = true;
   document.head.appendChild(script);
+}
+
+/** Инициализирован ли счётчик на текущей странице. */
+export function isMetrikaInitialized(): boolean {
+  return initialized;
+}
+
+/**
+ * Останавливает уже подключённый счётчик и удаляет его загруженный скрипт.
+ * Полное прекращение сетевых запросов гарантирует reload страницы после
+ * отзыва согласия: tag.js мог успеть запустить внутренние таймеры.
+ */
+export function disableMetrika() {
+  initialized = false;
+
+  if (typeof document === "undefined") return;
+
+  document
+    .querySelectorAll<HTMLScriptElement>(METRIKA_SCRIPT_SELECTOR)
+    .forEach((script) => script.remove());
+
+  window.ym = undefined;
 }
 
 /**

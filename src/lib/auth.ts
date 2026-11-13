@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 
-export const AUTH_COOKIE = "auth_token";
+// __Host- требует Secure, Path=/ и отсутствие Domain. В dev по HTTP такой
+// cookie браузер не сохранит, поэтому имя зависит от окружения.
+export const AUTH_COOKIE =
+  process.env.NODE_ENV === "production" ? "__Host-auth_token" : "auth_token";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 дней
 
 // iss/aud: токен, выписанный для других целей (или под чужим секретом
