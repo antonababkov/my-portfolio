@@ -11,22 +11,22 @@ datasource db {
 }
 
 model Profile {
-  id             String  @id @default(cuid())
-  fullName       String
-  position       String
-  description    String
-  sliderAutoPlay Boolean @default(false)
-  siteTitle       String  @default("Моё портфолио")
-  siteDescription String  @default("Личный сайт-портфолио")
-  email           String  @default("hello@example.com")
-  phone           String  @default("+7 (900) 000-00-00")
-  aboutExtraTitle String  @default("Обо мне")
-  aboutExtra      String  @default("")
-  aboutExtraVisible Boolean @default(false)
-  privacyPolicy   String  @default("")
-  personalDataPolicy String @default("")
-  operatorAddress String  @default("")
-  photos         Photo[]
+  id                 String  @id @default(cuid())
+  fullName           String
+  position           String
+  description        String
+  sliderAutoPlay     Boolean @default(false)
+  siteTitle          String  @default("Моё портфолио")
+  siteDescription    String  @default("Личный сайт-портфолио")
+  email              String  @default("hello@example.com")
+  phone              String  @default("+7 (900) 000-00-00")
+  aboutExtraTitle    String  @default("Обо мне")
+  aboutExtra         String  @default("")
+  aboutExtraVisible  Boolean @default(false)
+  privacyPolicy      String  @default("")
+  personalDataPolicy String  @default("")
+  operatorAddress    String  @default("")
+  photos             Photo[]
 }
 
 model Photo {
@@ -36,7 +36,7 @@ model Photo {
   description String?
   profile     Profile? @relation(fields: [profileId], references: [id])
   profileId   String?
-  project     Project? @relation(fields: [projectId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String?
   order       Int      @default(0)
 

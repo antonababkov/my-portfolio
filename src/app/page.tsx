@@ -3,6 +3,7 @@ import AboutExtraSection from "@/components/home/AboutExtraSection";
 import ProjectsSection from "@/components/home/ProjectsSection";
 import { getProfile, getProjects } from "@/lib/api";
 import { SITE_URL, SOCIALS } from "@/lib/constants";
+import { photoUrl } from "@/lib/photoUrl";
 import type { Profile, Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,12 @@ export default async function Home() {
     jobTitle: profile.position,
     description: profile.description,
     url: siteUrl,
-    image: profile.photos[0]?.url ? `${siteUrl}${profile.photos[0].url}` : undefined,
-    sameAs: SOCIALS.map((social) => social.href),
+    image: profile.photos[0]?.url
+      ? `${siteUrl}${photoUrl(profile.photos[0].url)}`
+      : undefined,
+    sameAs: SOCIALS.filter((social) => !social.placeholder).map(
+      (social) => social.href,
+    ),
     email: profile.email,
     telephone: profile.phone,
   };

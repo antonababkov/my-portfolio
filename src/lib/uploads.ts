@@ -1,3 +1,4 @@
+import { unlink } from "node:fs/promises";
 import path from "node:path";
 
 /** Папка, куда сохраняются загруженные файлы. */
@@ -17,4 +18,20 @@ export function filePathFromUploadUrl(url: string): string | null {
     return null;
   }
   return path.join(uploadsDir, path.basename(url));
+}
+
+/** Удаляет файл по публичному url. Отсутствие файла ошибкой не считается. */
+export async function removeUploadedFile(url: string): Promise<void> {
+  const filePath = filePathFromUploadUrl(url);
+  if (!filePath) {
+    return;
+  }
+
+  try {
+    await unlink(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.error(`Failed to delete uploaded file ${url}:`, error);
+    }
+  }
 }

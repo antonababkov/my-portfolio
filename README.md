@@ -8,7 +8,7 @@
 
 | Слой               | Технологии                                                                      |
 | ------------------ | ------------------------------------------------------------------------------- |
-| Frontend           | Next.js 16.3.4 (App Router, Turbopack, standalone), React 19.2.8, SCSS          |
+| Frontend           | Next.js 16.4.6 (App Router, Turbopack, standalone), React 19.2.8, SCSS          |
 | Backend / API      | Next.js Route Handlers, zod-валидация                                           |
 | ORM                | Prisma 7 (`prisma-client` + `@prisma/adapter-pg`) + PostgreSQL 16               |
 | Авторизация        | JWT (httpOnly-cookie) + bcryptjs                                                |
@@ -40,7 +40,7 @@ my-portfolio/
 ├─ prisma/
 │  ├─ schema.prisma        # модели Profile, Photo, Project, Admin
 │  ├─ migrations/          # SQL-миграции
-│  └─ seed.ts              # демо-данные + создание админа
+│  └─ seed.ts              # демо-профиль + создание админа
 ├─ src/
 │  ├─ app/                 # App Router (страницы, Route Handlers: api/auth, api/profile, api/projects, api/photos, api/upload, api/health)
 │  ├─ components/          # home/, admin/, ui/, footer/
@@ -82,11 +82,13 @@ AUTH_ADMIN_PASSWORD=replace-with-strong-password
 # JWT-секрет (обязателен): openssl rand -hex 64
 AUTH_SECRET=replace-with-64-hex-chars
 
-# Публичный URL
+# Публичный URL (в production обязателен)
 SITE_URL=http://localhost:3000
 ```
 
-> **Важно:** `AUTH_ADMIN_PASSWORD` и `AUTH_SECRET` задаются один раз при первом запуске. Сид создаёт админа только если его ещё нет (upsert `create`). Смена пароля в `.env` после первого seed **не** обновит существующего админа — для смены нужно обновить пароль через БД или пересоздать контейнер с чистыми volumes.
+> **SITE_URL:** в production-сборке отсутствие или некорректный `SITE_URL` — ошибка старта/сборки, а не тихий canonical на `localhost`. На сервере указывайте `https://ababkov-ao.ru`.
+
+> **Важно:** `AUTH_ADMIN_PASSWORD` и `AUTH_SECRET` задаются один раз при первом запуске. Сид создаёт админа, если его ещё нет. У существующего админа пароль **не** перезаписывается, кроме одного случая: если cost bcrypt-хеша ниже 12, сид перехеширует текущий пароль из `.env` (апгрейд слабого хеша). Для обычной смены пароля обновите его через БД или пересоздайте контейнер с чистыми volumes.
 >
 > Сид **откажется** работать, если `AUTH_ADMIN_PASSWORD` пуст, короче 8 символов, равен `admin123` или `replace-with-strong-password` — защита от тривиального пароля.
 >
@@ -116,14 +118,14 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 ### Что делает команда развёртывания
 
 - **db** — PostgreSQL 16, volume `db-data`, healthcheck `pg_isready`.
-- **migrate** — применяет миграции (`prisma migrate deploy`) и запускает seed (создаёт профиль, демо-проекты и админа). Работает один раз, `restart: "no"`. Требует `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` из `.env` (без дефолтов — иначе compose не поднимется).
+- **migrate** — применяет миграции (`prisma migrate deploy`) и запускает seed (создаёт демо-профиль и админа; устаревшие `project-demo-*` удаляются). Работает один раз, `restart: "no"`. Требует `AUTH_ADMIN_LOGIN`/`AUTH_ADMIN_PASSWORD` из `.env` (без дефолтов — иначе compose не поднимется).
 - **app** — standalone-сборка Next.js, volume `uploads`, порт `127.0.0.1:3000`, env `HOSTNAME=0.0.0.0` (иначе Next слушает IP контейнера и healthcheck по `127.0.0.1` не сработает), healthcheck через `GET /api/health` (30s interval, старт-период 40s).
 
 ### HTTPS (nginx)
 
 nginx запускается **на хосте**, вне Docker-стэка (как раньше Caddy). Конфиг — `docker/nginx/portfolio.conf`, проксирует на `127.0.0.1:3000`. Сертификаты выпускает `certbot`, автопродление — `certbot.timer`.
 
-Домен рабочий — `ababkov-ao.ru`. Сертификат покрывает и `www.ababkov-ao.ru`, но тот только редиректит на apex (по HTTP и по HTTPS), чтобы не было ошибки несовпадения имени.
+Домен рабочий — `ababkov-ao.ru`. Сертификат покрывает и `www.ababkov-ao.ru`, но тот только редиректит на apex (по HTTP и по HTTPS), чтобы не было ошибки несовпадения имени. Access-логи nginx отключены (`access_log off`) — в них попадали бы IP всех посетителей; для диагностики остаются error-логи.
 
 ```bash
 # 1. Пакеты
@@ -135,8 +137,9 @@ cp docker/nginx/portfolio.conf /etc/nginx/sites-available/portfolio.conf
 ln -s /etc/nginx/sites-available/portfolio.conf /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
-# 3. Сертификат: сначала работает только :80, блок :443 временно закомментирован
-#    (nginx не стартует, пока нет ssl-файлов)
+# 3. Сертификат: сначала работает только :80, блоки :443 временно закомментированы
+#    (nginx не стартует, пока нет ssl-файлов). ACME-location есть и в apex,
+#    и в www-блоке :80 — иначе www-редирект увёл бы проверку на неработающий :443.
 nginx -t && systemctl reload nginx
 certbot certonly --webroot -w /var/www/certbot \
   -d ababkov-ao.ru -d www.ababkov-ao.ru \
@@ -161,8 +164,8 @@ certbot renew --dry-run                  # проверка продления
 
 Особенности конфига, которые нельзя потерять при правках:
 
-- **`proxy_set_header X-Forwarded-For $remote_addr`** (а не `$proxy_add_x_forwarded_for`) — `getClientIp()` в `src/lib/rate-limit.ts` берёт первое значение XFF; с append'ом клиент подставлял бы свой IP и обходил rate-limit логина.
-- **`limit_req_zone` + `location = /api/auth/login`** — 5 запросов/мин на IP (`burst=5 nodelay`) до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому не опускайте ниже `LOGIN_MAX_ATTEMPTS` (`src/lib/rate-limit.ts:72`).
+- **`proxy_set_header X-Forwarded-For $remote_addr`** (а не `$proxy_add_x_forwarded_for`) — `getClientIp()` в `src/lib/rate-limit.ts` берёт последний hop XFF; с append'ом клиент подставлял бы свой IP и обходил rate-limit логина.
+- **`limit_req_zone` + `location = /api/auth/login`** — 5 запросов/мин на IP (`burst=5 nodelay`) до того, как запрос дойдёт до приложения. Считает и успешные попытки, поэтому не опускайте ниже `LOGIN_MAX_ATTEMPTS` (`src/lib/rate-limit.ts:86`).
 - **`client_max_body_size 8m`** — дефолт nginx 1m обрезал бы загрузку фотографий (приложение лимитирует 5 МБ).
 - **Security-заголовки не дублируются** — их отдаёт `next.config.ts`; `add_header` в nginx добавляет, а не заменяет, поэтому дубль давал бы два HSTS с разным `max-age`.
 
@@ -176,26 +179,27 @@ certbot renew --dry-run                  # проверка продления
 > Linux/macOS: `export COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"` — далее `$COMPOSE …`.
 > Windows PowerShell: используйте полную команду из таблицы (PowerShell не разбивает строку из переменной на аргументы).
 
-| Команда                                                                                        | Назначение                                                                                        |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `docker compose --env-file .env -f docker/docker-compose.yml up -d`                            | Поднять весь стек (db → migrate → app). Повторный запуск пересоздаёт только изменённые контейнеры |
-| `docker compose --env-file .env -f docker/docker-compose.yml up -d --build`                    | Пересобрать образы и поднять стек — основной цикл после изменений кода                            |
-| `docker compose -f docker/docker-compose.yml logs -f app`                                      | Следить за логами приложения (живой поток)                                                        |
-| `docker compose -f docker/docker-compose.yml logs migrate`                                     | Проверить, что миграции и сид применились (`Seed completed: …`)                                   |
-| `docker compose -f docker/docker-compose.yml ps`                                               | Статус контейнеров (`Up`, `Exit`, `Healthy`)                                                      |
-| `docker compose -f docker/docker-compose.yml restart app`                                      | Перезапуск одного сервиса без остановки остальных                                                 |
-| `docker compose --env-file .env -f docker/docker-compose.yml stop`                             | Остановить контейнеры (сохраняет их, данные и volumes нетронуты)                                  |
-| `docker compose --env-file .env -f docker/docker-compose.yml start`                            | Запустить остановленный стек сразу (`stop` → `start` быстрее, чем `up`)                           |
-| `docker compose -f docker/docker-compose.yml down`                                             | Полностью остановить и удалить контейнеры + сеть. **Volumes (БД и uploads) сохраняются**          |
-| `docker compose --env-file .env -f docker/docker-compose.yml build --no-cache app`             | Принудительная пересборка без кэша (если Docker отдаёт устаревший слой после правок)              |
-| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate`                 | Запустить сервис миграций вручную: `prisma migrate deploy` + seed                                 |
-| `docker exec -it docker-app-1 sh`                                                              | Открыть shell внутри контейнера приложения (отладка, инспекция файлов)                            |
-| `docker compose -f docker/docker-compose.yml exec db psql -U %POSTGRES_USER% -d %POSTGRES_DB%` | Интерактивный `psql` в базе данных (Windows: `%%VAR%%`; Linux/macOS: `$VAR`)                      |
-| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate sh`              | Интерактивный shell в окружении мигратора (с Prisma CLI/openssl)                                  |
-| `docker compose -f docker/docker-compose.yml config`                                           | Показать итоговый конфиг после подстановки переменных окружения                                   |
-| `docker compose --env-file .env -f docker/docker-compose.yml down -v`                          | Полный сброс: удаляет контейнеры, сеть **и volumes** (БД и загруженные файлы). Осторожно!         |
-| `docker cp docker-app-1:/app/public/uploads/photo.jpg ./`                                      | Скопировать файл из контейнера на хост (и наоборот)                                               |
-| `docker system prune -af`                                                                      | Удалить все неиспользуемые образы, контейнеры и кэш сборки (освобождение места)                   |
+| Команда | Назначение |
+| ------- | ---------- |
+| `docker compose --env-file .env -f docker/docker-compose.yml up -d`                                                 | Поднять весь стек (db → migrate → app). Повторный запуск пересоздаёт только изменённые контейнеры |
+| `docker compose --env-file .env -f docker/docker-compose.yml up -d --build`                                         | Пересобрать образы и поднять стек — основной цикл после изменений кода                            |
+| `docker compose --env-file .env -f docker/docker-compose.yml build`                                                 | Собрать оба образа (`docker-app` и `docker-migrate`) без запуска                                  |
+| `docker compose --env-file .env -f docker/docker-compose.yml logs -f app`                                           | Следить за логами приложения (живой поток)                                                        |
+| `docker compose --env-file .env -f docker/docker-compose.yml logs migrate`                                          | Проверить, что миграции и сид применились (`Seed completed: …`)                                   |
+| `docker compose --env-file .env -f docker/docker-compose.yml ps`                                                    | Статус контейнеров (`Up`, `Exit`, `Healthy`)                                                      |
+| `docker compose --env-file .env -f docker/docker-compose.yml restart app`                                           | Перезапуск одного сервиса без остановки остальных                                                 |
+| `docker compose --env-file .env -f docker/docker-compose.yml stop`                                                  | Остановить контейнеры (сохраняет их, данные и volumes нетронуты)                                  |
+| `docker compose --env-file .env -f docker/docker-compose.yml start`                                                 | Запустить остановленный стек сразу (`stop` → `start` быстрее, чем `up`)                           |
+| `docker compose --env-file .env -f docker/docker-compose.yml down`                                                  | Полностью остановить и удалить контейнеры + сеть. **Volumes (БД и uploads) сохраняются**          |
+| `docker compose --env-file .env -f docker/docker-compose.yml build --no-cache`                                      | Принудительная пересборка обоих образов без кэша (если Docker отдаёт устаревший слой)             |
+| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate`                                      | Запустить сервис миграций вручную: `prisma migrate deploy` + seed                                 |
+| `docker exec -it docker-app-1 sh`                                                                                   | Открыть shell внутри контейнера приложения (отладка, инспекция файлов)                            |
+| `docker compose --env-file .env -f docker/docker-compose.yml exec db psql -U %POSTGRES_USER% -d %POSTGRES_DB%`      | Интерактивный `psql` в базе данных (Windows: `%%VAR%%`; Linux/macOS: `$VAR`)                      |
+| `docker compose --env-file .env -f docker/docker-compose.yml run --rm migrate sh`                                   | Интерактивный shell в окружении мигратора (с Prisma CLI/openssl)                                  |
+| `docker compose --env-file .env -f docker/docker-compose.yml config`                                                | Показать итоговый конфиг после подстановки переменных окружения                                   |
+| `docker compose --env-file .env -f docker/docker-compose.yml down -v`                                               | Полный сброс: удаляет контейнеры, сеть **и volumes** (БД и загруженные файлы). Осторожно!         |
+| `docker cp docker-app-1:/app/public/uploads/photo.jpg ./`                                                           | Скопировать файл из контейнера на хост (и наоборот)                                               |
+| `docker system prune -af`                                                                                           | Удалить все неиспользуемые образы, контейнеры и кэш сборки (освобождение места)                   |
 
 ---
 
@@ -272,9 +276,10 @@ npx tsc --noEmit  # проверка типов
 Multi-stage сборка:
 
 1. `deps` — установка зависимостей `npm ci` (ровно по `package-lock.json`).
-2. `builder` — `prisma generate` + `npm run build` (Next standalone).
-3. `migrator` — лёгкий слой с Prisma CLI + `openssl`; применяет миграции и сид (запускается от root для прав на engines).
-4. `runner` — минимальный runtime `node server.js` от пользователя `nextjs`, volume `uploads`, healthcheck `GET /api/health`.
+2. `prisma` — `openssl` + `prisma generate`; отдельный слой с Prisma Client, без `next build`.
+3. `builder` — `npm run build` (Next standalone) с готовым Prisma Client из stage `prisma`.
+4. `migrator` — лёгкий слой с Prisma CLI + `openssl`; применяет миграции и сид (запускается от root для прав на engines). Не зависит от `builder`.
+5. `runner` — минимальный runtime `node server.js` от пользователя `nextjs`, volume `uploads`, healthcheck `GET /api/health`.
 
 Нативные модули (`sharp`, `pg`) требуют `node:22-slim` (не alpine).
 
@@ -294,7 +299,7 @@ Multi-stage сборка:
 | PUT    | `/api/projects/[id]` | Обновление проекта (админ)           |
 | DELETE | `/api/projects/[id]` | Удаление проекта (админ)             |
 | POST   | `/api/photos`        | Добавление фото (админ)              |
-| PUT    | `/api/photos`        | Обновление порядка/alt фото (админ)  |
+| PUT    | `/api/photos`        | Изменение порядка фото (админ)       |
 | PATCH  | `/api/photos/[id]`   | Обновление фото (админ)              |
 | DELETE | `/api/photos/[id]`   | Удаление фото (админ)                |
 | POST   | `/api/upload`        | Загрузка файла в `/uploads` (админ)  |
@@ -327,6 +332,6 @@ Multi-stage сборка:
     (Windows PowerShell: `%POSTGRES_USER%`/`%POSTGRES_PASSWORD%`). Затем перезапустить цепочку: `docker compose --env-file .env -f docker/docker-compose.yml up -d --force-recreate migrate app`.
   - _Полный сброс (данные БД и uploads удаляются):_ `docker compose --env-file .env -f docker/docker-compose.yml down -v`, затем `up -d --build`.
 - **`docker compose ps` показывает `(unhealthy)` для `app`** — проба `GET /api/health` не отвечает. Смотрите `docker compose logs app`: если приложение долго стартует (первые миграции/seed), это нормально в течение `start_period: 40s`; при повторе — проверьте логи и порт 3000. Если приложение отвечает снаружи, но healthcheck падает — у standalone-Next сервер слушает не `127.0.0.1`: Docker подставляет env `HOSTNAME` (равный IP/ID контейнера), и `server.js` берёт его как адрес бинда. В compose-файле это уже учтено (`HOSTNAME: "0.0.0.0"` у сервиса `app`); при запуске вне compose задайте `HOSTNAME` явно.
-- **Смена пароля админа** не применяется после повторного запуска — сид не перезаписывает существующего админа. Обновите пароль в БД или пересоздайте стек с чистыми volumes: `docker compose down -v`.
+- **Смена пароля админа** не применяется после повторного запуска — сид не перезаписывает существующего админа, если cost его bcrypt-хеша уже ≥ 12. Обновите пароль в БД или пересоздайте стек с чистыми volumes: `docker compose down -v`.
 - **Не применяются изменения при `up --build`** — убедитесь, что Docker-кэш не выдаёт старый слой: используйте `docker compose build --no-cache` при сомнениях.
 - **Загруженные изображения не видны** — убедитесь, что volume `uploads` смонтирован и приложение отдаёт `/uploads` с заголовком `Cache-Control`.

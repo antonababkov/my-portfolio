@@ -107,6 +107,7 @@ export async function POST(request: Request) {
     secure: isSecure,
     path: "/",
     maxAge: SESSION_MAX_AGE,
+    priority: "high",
   });
 
   return response;

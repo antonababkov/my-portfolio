@@ -12,6 +12,10 @@ import { readBodyWithLimit } from "@/lib/body";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 // Мультипарт-обёртка добавляет overhead поверх размера файла.
 const MAX_REQUEST_SIZE = MAX_FILE_SIZE + 1024 * 1024;
+// Ограничение декодирования: защита от decompression-bomb / огромных
+// изображений, которые при 5 МБ на входе могут раздуться в памяти.
+const MAX_INPUT_PIXELS = 40_000_000;
+const SHARP_INPUT = { limitInputPixels: MAX_INPUT_PIXELS } as const;
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MIME_CONF: Record<
   string,
@@ -110,7 +114,7 @@ export async function POST(request: Request) {
 
   if (variant === "profile") {
     try {
-      const metadata = await sharp(buffer).metadata();
+      const metadata = await sharp(buffer, SHARP_INPUT).metadata();
       const width = metadata.autoOrient?.width ?? metadata.width;
       const height = metadata.autoOrient?.height ?? metadata.height;
 
@@ -133,7 +137,7 @@ export async function POST(request: Request) {
       );
 
       if (!hasCrop) {
-        output = await sharp(buffer)
+        output = await sharp(buffer, SHARP_INPUT)
           .rotate()
           .resize(PROFILE_MIN_SIZE, PROFILE_MIN_SIZE, { fit: "cover" })
           .toFormat(MIME_CONF[file.type].format)
@@ -163,7 +167,7 @@ export async function POST(request: Request) {
           );
         }
 
-        output = await sharp(buffer)
+        output = await sharp(buffer, SHARP_INPUT)
           .rotate()
           .extract(crop)
           .resize(PROFILE_MIN_SIZE, PROFILE_MIN_SIZE)
@@ -181,7 +185,7 @@ export async function POST(request: Request) {
     try {
       // Перекодируем содержимое через sharp: это валидирует, что файл —
       // реальное изображение, и снимает риск полиглотов (HTML-пустышек и т.п.).
-      output = await sharp(buffer)
+      output = await sharp(buffer, SHARP_INPUT)
         .rotate()
         .toFormat(MIME_CONF[file.type].format)
         .toBuffer();
@@ -192,6 +196,13 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+  }
+
+  if (output.length > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Обработанное изображение слишком большое (max 5MB)" },
+      { status: 413 }
+    );
   }
 
   await mkdir(uploadsDir, { recursive: true });

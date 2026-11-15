@@ -4,6 +4,7 @@ import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { ProjectUpdateSchema } from "@/lib/validation";
 import { readJson } from "@/lib/body";
+import { removeUploadedFile } from "@/lib/uploads";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -59,12 +60,20 @@ export async function DELETE(request: Request, { params }: Params) {
   }
   const { id } = await params;
 
-  const existing = await db.project.findUnique({ where: { id } });
+  const existing = await db.project.findUnique({
+    where: { id },
+    select: { photos: { select: { url: true } } },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
+  // Photo.project имеет onDelete: Cascade — записи удалятся вместе с
+  // проектом. Файлы нужно удалить отдельно, после успешного удаления из БД.
   await db.project.delete({ where: { id } });
+  await Promise.all(
+    existing.photos.map((photo) => removeUploadedFile(photo.url))
+  );
 
   return NextResponse.json({ ok: true });
 }
