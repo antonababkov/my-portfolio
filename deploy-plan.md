@@ -345,6 +345,7 @@ test ! -s /var/log/nginx/portfolio.access.log && echo "access log disabled"
 
 - [ ] **DNS.** A-записи на `ababkov-ao.ru` и `www.ababkov-ao.ru` указывают на публичный IP Jino VPS, пропагация завершена.
 - [ ] **Порты.** На Jino VPS порты 80 и 443 открыты для входящего трафика.
+- [ ] **Docker не публикует лишнего.** `sudo ./docker/check-ports.sh` → все проверки `[ OK ]` (наружу только 80/443, `app` на `127.0.0.1:3000`, `db` без публикации, в `DOCKER-USER` нет нужды).
 - [ ] **Docker.** `docker version` и `docker compose version` работают на сервере.
 - [ ] **`.env`.** В `~/portfolio/.env` заполнены все runtime-переменные, права `chmod 600`. В нём нет плейсхолдеров (`AUTH_ADMIN_PASSWORD` ≠ `replace-with-strong-password`, длина ≥ 8).
 - [ ] **Образы собраны локально** (Вариант 2) — без ошибок, оба: `docker-app` и `docker-migrate`.

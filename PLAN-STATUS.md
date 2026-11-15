@@ -29,6 +29,16 @@
 - [x] Seed проверен на идемпотентность: два запуска подряд без ошибок.
 - [x] Каскад `Photo.project` проверен на реальной БД: после удаления проекта остаётся 0 фото.
 
+### Docker и сборка образов
+
+- [x] Dockerfile разделён на stage `prisma`: Prisma Client генерируется отдельно, без `next build`.
+- [x] `builder` использует готовый клиент из stage `prisma`; `migrator` больше не зависит от `builder` и не запускает Next.js-сборку.
+- [x] `openssl` установлен в stage `prisma` и `migrator`; предупреждение Prisma о libssl устранено.
+- [x] `.dockerignore` исключает `src/generated`, чтобы не тащить устаревший локальный клиент в контекст сборки.
+- [x] `docker compose --env-file .env -f docker/docker-compose.yml build` успешно собирает `docker-app` и `docker-migrate` (13.11.2026).
+- [x] Проверено: в образе `docker-migrate` нет `.next`, Prisma CLI 7.10.1 и `tsx` работают, схема и сгенерированный клиент на месте.
+- [x] README: все compose-команды переведены на `--env-file .env`, добавлена сборка обоих образов, обновлено описание stage.
+
 ### Инфраструктура и безопасность
 
 - [x] `docker/nginx/portfolio.conf`: `access_log off`.
@@ -78,10 +88,10 @@
 - [x] Проверены лимит 5 МБ (413), decompression-bomb (400), каскадное удаление проекта и файлов, отдельное удаление фото с файлом.
 - [x] Проверены rate-limit логина (5×401, затем 429) и очистка cookie при logout (`Max-Age=0`).
 - [x] JSON-LD `image` переведён на фактический URL раздачи `/api/uploads/...` (статический `/uploads/...` не подхватывает файлы, загруженные после старта standalone-сервера).
+- [x] В браузере проверены consent-баннер (accept/decline/reload), отзыв согласия, удаление cookie Метрики, мобильный вид и тексты политик (13.11.2026).
 
 ## В работе
 
-- [ ] Проверка consent/Метрики и consent-баннера в браузере (accept/decline/reload, удаление cookie, мобильный вид).
 - [ ] Остановка временного standalone-сервера и временной PostgreSQL после браузерных проверок.
 
 ## История: зависание 12.11.2026 и решение
@@ -103,45 +113,52 @@ $envMap = @{}; Get-Content -LiteralPath ".env" | ForEach-Object { if ($_ -match 
 - Проверки файлов uploads учитывают, что standalone-сервер работает с каталогом `.next/standalone/public/uploads`.
 
 
-## Не сделано
+## Осталось сделать
 
-### Функциональный smoke
+### До деплоя (локально)
 
-- [ ] Проверить accept/decline consent и reload при отзыве.
-- [ ] Проверить удаление cookie Метрики.
-- [x] Проверить login: `__Host-auth_token`, `HttpOnly`, `Secure`, `SameSite`.
-- [x] Проверить redirect неавторизованного пользователя с `/admin`.
-- [x] Проверить `Cache-Control: no-store` на API и admin.
-- [x] Проверить COOP/CORP, CSP и остальные security-заголовки.
-- [x] Проверить загрузку изображения, лимит 5 МБ и отказ для decompression-bomb.
-- [x] Проверить удаление проекта вместе с записями фото и файлами в `uploads`.
-- [x] Проверить `robots.txt`, `sitemap.xml`, OG-изображение и metadata с живой БД.
-- [ ] Проверить тексты политик и работу consent-баннера на мобильном.
+- [ ] Остановить временный standalone-сервер (порт `3001`) и временную PostgreSQL `portfolio-audit-db` (порт `55432`); убедиться, что порт `3001` свободен.
+- [ ] Создать production `.env` отдельно от локального: не копировать текущий `.env`. Файл называется именно `.env`; `.env.production` в текущей Docker-схеме не нужен.
+- [ ] Задать в production `.env` новые секреты: `POSTGRES_PASSWORD` (URL-safe), `AUTH_SECRET` (≥32 символов), `AUTH_ADMIN_PASSWORD` (≥8 символов, не плейсхолдер), `SITE_URL=https://ababkov-ao.ru`, production `NEXT_PUBLIC_METRIKA_ID`.
+- [ ] Зафиксировать финальный пароль администратора **до первого production seed**: seed не перезаписывает существующий пароль при cost ≥ 12.
+- [ ] Проверить, что локальные build-args совпадают с production: `SITE_URL` и `NEXT_PUBLIC_METRIKA_ID` вшиваются в `docker-app` на этапе сборки; после изменения нужна пересборка.
+- [ ] Пересобрать оба образа после всех правок: `docker compose --env-file .env -f docker/docker-compose.yml build`.
+- [ ] Проверить состав образов: `docker compose --env-file .env -f docker/docker-compose.yml config --images`; в `docker-migrate` не должно быть `.next`; `.env` не должен попадать в образ или архив.
+- [ ] Сохранить образы: `docker save -o portfolio-images-YYYYMMDD-HHMMSS.tar docker-app:latest docker-migrate:latest`; отдельно упаковать `docker/docker-compose.yml` и `docker/nginx/portfolio.conf`.
+- [ ] Проверить git-состояние: миграция `20261112000000_photo_project_cascade` и `PLAN-STATUS.md` должны попасть в коммит; выполнить `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`; сделать commit/tag.
+- [ ] Решить судьбу заглушек соцсетей. По текущему решению они остаются (`placeholder: true`) и в текущую итерацию не входят; если заменяем — сделать до сборки образов.
+- [ ] Подготовить место и retention для бэкапов (например, `/var/backups/portfolio`, 7–14 дней) до открытия сайта.
+- [ ] Опционально: устранить предупреждение Turbopack о динамическом `path.join` в `src/app/api/upload/route.ts:209`; на деплой не влияет, но раздувает трассировку standalone-сборки.
 
-### Инфраструктура
+### Во время деплоя (VPS, до публичного открытия)
 
-- [ ] `nginx -t` на целевом конфиге.
-- [ ] Certbot dry-run для apex и `www`.
-- [ ] E2E-проверка через nginx и HTTPS.
-- [ ] Настроить UFW: только 22/80/443.
-- [ ] Настроить SSH по ключам и fail2ban для SSH.
-- [ ] Включить `unattended-upgrades`.
-- [ ] Настроить регулярные `pg_dump` и архивирование `uploads`.
-- [ ] Проверить восстановление БД/uploads на копии.
+- [ ] DNS: A-записи `ababkov-ao.ru` и `www.ababkov-ao.ru` → IP VPS; дождаться распространения.
+- [ ] Базовая безопасность: SSH по ключам, отключить вход по паролю, UFW только `22/80/443`, fail2ban для SSH, `unattended-upgrades`, корректный часовой пояс.
+- [ ] Установить Docker Engine + Compose plugin; проверить `docker version` и `docker compose version`.
+- [ ] Создать `~/portfolio`, загрузить `docker-compose.yml`, `docker/nginx/portfolio.conf` и production `.env`; выполнить `chmod 600 .env`. Локальный `.env` не передавать.
+- [ ] Загрузить образы: `docker load -i portfolio-images-*.tar`; сверить `docker compose --env-file .env -f docker/docker-compose.yml config --images`.
+- [ ] Запустить стек: `docker compose --env-file .env -f docker/docker-compose.yml up -d --no-build`; проверить `ps` (`db` и `app` — `Up (healthy)`) и `logs migrate` (`Seed completed`).
+- [ ] Установить nginx; сначала включить конфиг только на `:80`; выполнить `nginx -t`; выпустить сертификаты certbot для apex и `www`; включить финальный `:443`; снова `nginx -t`; выполнить reload.
+- [ ] Проверить `certbot renew --dry-run`, активность `certbot.timer`, редиректы HTTP→HTTPS и `www`→apex.
+- [ ] Убедиться, что приложение доступно только через nginx: `127.0.0.1:3000` не открыт наружу, снаружи доступны только `80/443`.
 
-### Деплой
+### После деплоя
 
-- [ ] Собрать и запустить production на VPS.
-- [ ] Применить миграции на production-БД.
-- [ ] Выполнить production seed.
-- [ ] Задать реальный пароль администратора.
-- [ ] Заменить заглушки соцсетей на реальные ссылки.
-- [ ] Проверить `SITE_URL` и `NEXT_PUBLIC_METRIKA_ID` в production.
-- [ ] Проверить автозапуск контейнеров и nginx после перезагрузки.
+- [ ] E2E через HTTPS: `/api/health`, login/logout, `/admin`, создание/редактирование проекта, загрузка и раздача фото, каскадное удаление проекта и файлов, лимит 5 МБ, `429` на login с корректным `X-Forwarded-For`.
+- [ ] Проверить security-заголовки: CSP с nonce, HSTS ровно один, COOP/CORP, `X-Robots-Tag`, отсутствие `X-Powered-By`, `Cache-Control: no-store` на API и admin.
+- [ ] Проверить `robots.txt`, `sitemap.xml`, OG-изображение, JSON-LD и раздачу `/api/uploads/...` на production-домене.
+- [ ] Повторно проверить consent-баннер и Метрику на production: accept/decline, reload, удаление cookie, мобильный вид.
+- [ ] Настроить регулярный `pg_dump` и архивирование volume `uploads`; проверить восстановление БД и файлов на копии.
+- [ ] Проверить автозапуск после reboot: контейнеры (`restart: unless-stopped`), nginx, `certbot.timer`.
+- [ ] Проверить свободное место и логи Docker, настроить ротацию; при необходимости добавить внешний мониторинг.
+- [ ] Заменить заглушки соцсетей при отдельном решении; это потребует пересборки `docker-app` и повторного деплоя.
 
 ## Следующий шаг
 
-1. Проверить в браузере consent-баннер, отзыв согласия, удаление cookie Метрики и мобильный вид.
-2. Остановить временный standalone-сервер и временную PostgreSQL.
-3. Проверить `nginx -t`, certbot dry-run и E2E через nginx.
-4. Перейти к деплою и инфраструктурному чек-листу.
+1. Остановить временный standalone-сервер и `portfolio-audit-db`.
+2. Подготовить production `.env` с новыми секретами и финальным паролем администратора.
+3. Пересобрать и сохранить `docker-app` / `docker-migrate`; проверить build-args и отсутствие `.env` в артефактах.
+4. Зафиксировать изменения в git, включая миграцию каскада и `PLAN-STATUS.md`.
+5. На VPS: DNS, SSH/UFW/fail2ban/unattended-upgrades, Docker, `.env`, `docker load`, `up -d --no-build`.
+6. nginx + certbot: `nginx -t`, выпуск сертификатов, `certbot renew --dry-run`.
+7. E2E через HTTPS, бэкапы и восстановление, тест автозапуска после reboot.
