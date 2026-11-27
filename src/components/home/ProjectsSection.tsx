@@ -7,7 +7,20 @@ type ProjectsSectionProps = {
 };
 
 export default function ProjectsSection({ projects }: ProjectsSectionProps) {
-  if (projects.length === 0) return null;
+  if (projects.length === 0) {
+    return (
+      <section className={styles.section} id="projects" aria-labelledby="projects-title">
+        <header className={styles.header}>
+          <h2 id="projects-title" className={styles.heading}>
+            Проекты
+          </h2>
+        </header>
+        <p className={styles.empty}>
+          Проекты пока не добавлены — скоро здесь появятся работы.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.section} id="projects" aria-labelledby="projects-title">

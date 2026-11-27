@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { SOCIAL_LINKS_MAX } from "@/lib/socialLinks";
 
 const optionalText = (max: number) => z.string().max(max).optional();
 
-const projectLinkValue = z
+const httpUrl = z
   .string()
+  .trim()
   .max(500)
   .url("Некорректная ссылка")
   .refine((value) => {
@@ -18,7 +20,7 @@ const projectLinkValue = z
 /** Пустая строка из формы — это «без ссылки» (null), а не ошибка валидации. */
 const projectLink = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-  projectLinkValue.nullable().optional()
+  httpUrl.nullable().optional()
 );
 
 /** Обновление проекта: хотя бы одно поле, все — опциональны. */
@@ -60,4 +62,14 @@ export const ProfileUpdateSchema = z.object({
   privacyPolicy: optionalText(20_000),
   personalDataPolicy: optionalText(20_000),
   operatorAddress: optionalText(500),
+  socialLinks: z
+    .array(
+      z.object({
+        id: z.string().max(100).optional(),
+        label: z.string().trim().min(1, "Введите название").max(100),
+        url: httpUrl,
+      }),
+    )
+    .max(SOCIAL_LINKS_MAX, "Можно добавить не больше 10 ссылок")
+    .optional(),
 });

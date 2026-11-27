@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Modal from "@/components/ui/Modal";
-import { SOCIALS } from "@/lib/constants";
 import { openConsent } from "@/lib/consent";
+import type { SocialLink } from "@/types";
 import styles from "./Footer.module.scss";
 
 type FooterProps = {
@@ -11,6 +11,7 @@ type FooterProps = {
   phone: string;
   privacyPolicy: string;
   personalDataPolicy: string;
+  socialLinks: SocialLink[];
 };
 
 type PolicyKey = "privacy" | "personalData" | null;
@@ -20,6 +21,7 @@ export default function Footer({
   phone,
   privacyPolicy,
   personalDataPolicy,
+  socialLinks,
 }: FooterProps) {
   const [openPolicy, setOpenPolicy] = useState<PolicyKey>(null);
 
@@ -48,19 +50,21 @@ export default function Footer({
           </a>
         </div>
 
-        <nav className={styles.socials} aria-label="Социальные сети">
-          {SOCIALS.map((social) => (
-            <a
-              key={social.id}
-              className={styles.socialLink}
-              href={social.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {social.label}
-            </a>
-          ))}
-        </nav>
+        {socialLinks.length > 0 && (
+          <nav className={styles.socials} aria-label="Социальные сети">
+            {socialLinks.map((social) => (
+              <a
+                key={social.id}
+                className={styles.socialLink}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {social.label}
+              </a>
+            ))}
+          </nav>
+        )}
 
         <nav className={styles.policies} aria-label="Документы">
           <button

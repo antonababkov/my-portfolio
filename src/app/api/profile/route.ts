@@ -4,6 +4,7 @@ import { getSessionUser, unauthorizedResponse } from "@/lib/session";
 import { assertSameOrigin } from "@/lib/csrf";
 import { ProfileUpdateSchema } from "@/lib/validation";
 import { readJson } from "@/lib/body";
+import { normalizeSocialLinks } from "@/lib/socialLinks";
 
 export async function GET() {
   const profile = await db.profile.findFirst({
@@ -14,7 +15,10 @@ export async function GET() {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  return NextResponse.json(profile);
+  return NextResponse.json({
+    ...profile,
+    socialLinks: normalizeSocialLinks(profile.socialLinks),
+  });
 }
 
 export async function PUT(request: Request) {
@@ -55,7 +59,10 @@ export async function PUT(request: Request) {
     privacyPolicy,
     personalDataPolicy,
     operatorAddress,
+    socialLinks,
   } = parsed.data;
+
+  const links = normalizeSocialLinks(socialLinks ?? []);
 
   let profile = await db.profile.findFirst();
   if (!profile) {
@@ -75,6 +82,7 @@ export async function PUT(request: Request) {
         ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
         ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
         ...(operatorAddress !== undefined ? { operatorAddress } : {}),
+        ...(socialLinks !== undefined ? { socialLinks: links } : {}),
       },
     });
   } else {
@@ -95,9 +103,13 @@ export async function PUT(request: Request) {
         ...(privacyPolicy !== undefined ? { privacyPolicy } : {}),
         ...(personalDataPolicy !== undefined ? { personalDataPolicy } : {}),
         ...(operatorAddress !== undefined ? { operatorAddress } : {}),
+        ...(socialLinks !== undefined ? { socialLinks: links } : {}),
       },
     });
   }
 
-  return NextResponse.json(profile);
+  return NextResponse.json({
+    ...profile,
+    socialLinks: normalizeSocialLinks(profile.socialLinks),
+  });
 }

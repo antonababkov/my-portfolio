@@ -6,6 +6,12 @@ export type Photo = {
   order: number;
 };
 
+export type SocialLink = {
+  id: string;
+  label: string;
+  url: string;
+};
+
 export type Profile = {
   id: string;
   fullName: string;
@@ -22,6 +28,7 @@ export type Profile = {
   privacyPolicy: string;
   personalDataPolicy: string;
   operatorAddress: string;
+  socialLinks: SocialLink[];
   photos: Photo[];
 };
 

@@ -100,3 +100,41 @@
   color: var(--color-danger);
   font-size: v.$font-size-sm;
 }
+
+.socialRow {
+  display: flex;
+  align-items: flex-end;
+  gap: v.$space-3;
+}
+
+.socialFields {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr;
+  gap: v.$space-3;
+
+  @include m.respond-to("tablet") {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.removeBtn,
+.addBtn {
+  padding: v.$space-2 v.$space-3;
+  border: 1px solid var(--color-border);
+  border-radius: v.$radius-md;
+  background: var(--color-background-elevated);
+  color: var(--color-foreground);
+  font-size: v.$font-size-sm;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: v.$opacity-disabled;
+    cursor: not-allowed;
+  }
+}
+
+.addBtn {
+  align-self: flex-start;
+}
