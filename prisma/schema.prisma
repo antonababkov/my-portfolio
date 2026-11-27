@@ -26,6 +26,7 @@ model Profile {
   privacyPolicy      String  @default("")
   personalDataPolicy String  @default("")
   operatorAddress    String  @default("")
+  socialLinks        Json    @default("[]")
   photos             Photo[]
 }
 

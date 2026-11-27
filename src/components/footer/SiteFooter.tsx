@@ -5,6 +5,7 @@ import {
   PERSONAL_DATA_POLICY_TEXT,
 } from "@/lib/constants";
 import { renderPolicyTemplate } from "@/lib/policy";
+import type { SocialLink } from "@/types";
 import Footer from "./Footer";
 
 export default async function SiteFooter() {
@@ -14,6 +15,7 @@ export default async function SiteFooter() {
   let operatorAddress = "";
   let privacyPolicy = PRIVACY_POLICY_TEXT;
   let personalDataPolicy = PERSONAL_DATA_POLICY_TEXT;
+  let socialLinks: SocialLink[] = [];
 
   try {
     const profile = await getProfile();
@@ -25,6 +27,7 @@ export default async function SiteFooter() {
       privacyPolicy = profile.privacyPolicy.trim() || PRIVACY_POLICY_TEXT;
       personalDataPolicy =
         profile.personalDataPolicy.trim() || PERSONAL_DATA_POLICY_TEXT;
+      socialLinks = profile.socialLinks;
     }
   } catch (error) {
     console.error("Failed to load footer contacts from DB:", error);
@@ -38,6 +41,7 @@ export default async function SiteFooter() {
       phone={phone}
       privacyPolicy={renderPolicyTemplate(privacyPolicy, templateData)}
       personalDataPolicy={renderPolicyTemplate(personalDataPolicy, templateData)}
+      socialLinks={socialLinks}
     />
   );
 }

@@ -107,8 +107,8 @@ cp .env.example .env   # Windows PowerShell: Copy-Item .env.example .env
 docker compose --env-file .env -f docker/docker-compose.yml up -d --build
 
 # 3. Проверка
-docker compose -f docker/docker-compose.yml logs migrate   # "Seed completed: ..."
-docker compose -f docker/docker-compose.yml ps             # db и app должны быть (healthy)
+docker compose --env-file .env -f docker/docker-compose.yml logs migrate   # "Seed completed: ..."
+docker compose --env-file .env -f docker/docker-compose.yml ps             # db и app должны быть (healthy)
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000   # 200
 # Windows PowerShell: (Invoke-WebRequest -Uri http://localhost:3000).StatusCode
 ```

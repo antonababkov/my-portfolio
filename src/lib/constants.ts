@@ -40,27 +40,11 @@ function resolveSiteUrl(): string {
 
 export const SITE_URL = resolveSiteUrl();
 
-// Контакты — fallback, если профиль в БД ещё не создан. Соцсети пока
-// остаются заглушками (placeholder: true) и не попадают в JSON-LD sameAs.
+// Контакты — fallback, если профиль в БД ещё не создан.
 export const CONTACTS = {
   email: "hello@example.com",
   phone: "+7 (900) 000-00-00",
 };
-
-export const SOCIALS = [
-  {
-    id: "github",
-    label: "GitHub",
-    href: "https://github.com",
-    placeholder: true,
-  },
-  {
-    id: "telegram",
-    label: "Telegram",
-    href: "https://t.me",
-    placeholder: true,
-  },
-] as const;
 
 // Тексты политик для модальных окон в футере.
 // Плейсхолдеры {{fullName}}, {{email}}, {{phone}}, {{operatorAddress}}

@@ -2,7 +2,7 @@ import AboutSection from "@/components/home/AboutSection";
 import AboutExtraSection from "@/components/home/AboutExtraSection";
 import ProjectsSection from "@/components/home/ProjectsSection";
 import { getProfile, getProjects } from "@/lib/api";
-import { SITE_URL, SOCIALS } from "@/lib/constants";
+import { SITE_URL } from "@/lib/constants";
 import { photoUrl } from "@/lib/photoUrl";
 import type { Profile, Project } from "@/types";
 
@@ -37,9 +37,7 @@ export default async function Home() {
     image: profile.photos[0]?.url
       ? `${siteUrl}${photoUrl(profile.photos[0].url)}`
       : undefined,
-    sameAs: SOCIALS.filter((social) => !social.placeholder).map(
-      (social) => social.href,
-    ),
+    sameAs: profile.socialLinks.map((social) => social.url),
     email: profile.email,
     telephone: profile.phone,
   };
